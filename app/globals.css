@@ -24,3 +24,15 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg) scale(1.0); }
+  50% { transform: rotate(3deg) scale(1.15); }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Enable manual dark mode via class */
+@custom-variant dark (&:is(.dark *));
