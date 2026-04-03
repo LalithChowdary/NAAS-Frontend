@@ -11,7 +11,8 @@ import {
   BarChart3, 
   LogOut,
   LayoutDashboard,
-  Truck
+  Truck,
+  Calendar
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -25,6 +26,7 @@ export default function AdminLayout({
     { name: "Dashboard", href: "/staff/admin", icon: LayoutDashboard },
     { name: "Customers", href: "/staff/admin/customers", icon: Users },
     { name: "Delivery Personnel", href: "/staff/admin/delivery", icon: Truck },
+    { name: "Delivery Schedule", href: "/staff/admin/delivery/schedule", icon: Calendar },
     { name: "Publications", href: "/staff/admin/publications", icon: BookOpen },
     { name: "Subscriptions", href: "/staff/admin/subscriptions", icon: RefreshCcw },
     { name: "Billing", href: "/staff/admin/billing", icon: Banknote },

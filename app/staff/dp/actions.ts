@@ -52,15 +52,15 @@ export async function dpLogin(prevState: any, formData: FormData) {
       method: 'GET',
       headers: { 'Authorization': `Bearer ${data.token}` }
     });
-    
+
     if (meRes.ok) {
-       const meData = await meRes.json();
-       cookieStore.set('dp_id', meData.id.toString(), {
-         httpOnly: true,
-         secure: process.env.NODE_ENV === 'production',
-         sameSite: 'lax',
-         path: '/'
-       });
+      const meData = await meRes.json();
+      cookieStore.set('dp_id', meData.id.toString(), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/'
+      });
     }
 
   } catch (error) {
