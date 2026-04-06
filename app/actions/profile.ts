@@ -8,10 +8,6 @@ const BACKEND_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808
 export async function updateProfileAction(data: {
   name?: string;
   phone?: string;
-  address?: string;
-  city?: string;
-  pincode?: string;
-  area?: string;
 }) {
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;

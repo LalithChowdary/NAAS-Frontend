@@ -7,6 +7,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 export async function createSubscriptionAction(payload: {
   items: { publicationId: number; frequency?: string; customDeliveryDays?: string }[];
   startDate: string;
+  addressId?: number;
 }) {
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;

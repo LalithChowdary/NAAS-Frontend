@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Users, 
   RefreshCcw, 
@@ -37,6 +38,7 @@ interface DashboardData {
 }
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -47,6 +49,10 @@ export default function AdminDashboard() {
         setLoading(true);
         const res = await fetchDashboardMetrics();
         if (!res.ok || !res.data) {
+          if ('unauthorized' in res && res.unauthorized) {
+            router.replace('/staff/admin/login');
+            return;
+          }
           setError(res.message || "Failed to load dashboard metrics");
         } else {
           setData(res.data);
@@ -58,7 +64,7 @@ export default function AdminDashboard() {
       }
     }
     loadMetrics();
-  }, []);
+  }, [router]);
 
   if (loading) {
     return (

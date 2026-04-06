@@ -7,10 +7,6 @@ type Profile = {
   name?: string;
   email?: string;
   phone?: string;
-  address?: string;
-  city?: string;
-  pincode?: string;
-  area?: string;
 };
 
 export default function ProfileCardClient({ profile, fallbackEmail }: { profile: Profile | null, fallbackEmail?: string }) {
@@ -21,10 +17,6 @@ export default function ProfileCardClient({ profile, fallbackEmail }: { profile:
   const [formData, setFormData] = useState({
     name: profile?.name || '',
     phone: profile?.phone || '',
-    address: profile?.address || '',
-    city: profile?.city || '',
-    pincode: profile?.pincode || '',
-    area: profile?.area || '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,11 +42,11 @@ export default function ProfileCardClient({ profile, fallbackEmail }: { profile:
 
   return (
     <>
-      <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col items-start">
+      <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col items-start h-full">
         <h3 className="text-lg font-medium text-slate-900 mb-4">Account Details</h3>
-        <p className="text-sm text-slate-900 font-medium mb-1">{profile?.email || fallbackEmail || 'Loading...'}</p>
+        <p className="text-sm text-slate-900 font-medium mb-1">{profile?.name || fallbackEmail || 'Loading...'}</p>
         <p className="text-sm text-slate-500 font-light mb-auto">
-          {profile?.address ? `${profile.address}, ${profile.city}` : 'No address on file'}
+          {profile?.phone || 'No phone number added'}
         </p>
         
         <div className="mt-6 pt-6 border-t border-slate-50 w-full">
@@ -69,12 +61,12 @@ export default function ProfileCardClient({ profile, fallbackEmail }: { profile:
 
       {isEditing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/20 backdrop-blur-sm transition-opacity">
-          <div className="bg-white p-8 rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white p-8 rounded-[2.5rem] w-full max-w-lg shadow-2xl overflow-hidden relative">
             <h3 className="text-2xl font-semibold text-slate-900 tracking-tight mb-2">
               Edit Profile
             </h3>
             <p className="text-slate-500 font-light text-sm mb-8 leading-relaxed">
-              Update your personal and delivery information.
+              Update your personal contact information.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -108,63 +100,6 @@ export default function ProfileCardClient({ profile, fallbackEmail }: { profile:
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="+91 9999999999"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-100 transition-all font-medium placeholder-slate-300"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
-                  Address
-                </label>
-                <input 
-                  type="text" 
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  placeholder="Flat No, Building, Street"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-100 transition-all font-medium placeholder-slate-300"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
-                    Area
-                  </label>
-                  <input 
-                    type="text" 
-                    name="area"
-                    value={formData.area}
-                    onChange={handleChange}
-                    placeholder="Downtown"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-100 transition-all font-medium placeholder-slate-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
-                    City
-                  </label>
-                  <input 
-                    type="text" 
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    placeholder="Metropolis"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-100 transition-all font-medium placeholder-slate-300"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
-                  Pincode
-                </label>
-                <input 
-                  type="text" 
-                  name="pincode"
-                  value={formData.pincode}
-                  onChange={handleChange}
-                  placeholder="400001"
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-100 transition-all font-medium placeholder-slate-300"
                 />
               </div>

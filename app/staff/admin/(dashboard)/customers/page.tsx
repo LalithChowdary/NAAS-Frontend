@@ -12,7 +12,6 @@ interface Customer {
   lastName: string;
   email: string;
   phone: string;
-  address: string;
   active: boolean;
   activeSubscriptionsCount: number;
 }
@@ -114,8 +113,7 @@ export default function CustomersPage() {
               <tr>
                 <th className="px-6 py-4 font-medium">Name</th>
                 <th className="px-6 py-4 font-medium">Phone</th>
-                <th className="px-6 py-4 font-medium">Address</th>
-                <th className="px-6 py-4 font-medium text-center">Subscriptions</th>
+                <th className="px-6 py-4 font-medium">Subscriptions</th>
                 <th className="px-6 py-4 font-medium">Status</th>
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
@@ -148,11 +146,6 @@ export default function CustomersPage() {
                       {customer.phone || "—"}
                     </td>
                     <td className="px-6 py-3">
-                      <div className="max-w-[200px] truncate" title={customer.address}>
-                        {customer.address || "—"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-3 text-center">
                       <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50 border border-gray-100 text-xs font-medium text-gray-700">
                         {customer.activeSubscriptionsCount || 0}
                       </span>

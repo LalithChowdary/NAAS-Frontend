@@ -11,7 +11,6 @@ interface Customer {
   lastName: string;
   email: string;
   phone: string;
-  address: string;
   active: boolean;
   createdAt: string;
 }
@@ -151,16 +150,6 @@ export default function CustomerDetailPage() {
               <div>
                 <p className="text-xs text-gray-500">Phone</p>
                 <p className="text-sm font-medium text-gray-900">{customer.phone || "—"}</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
-                <MapPin className="h-4 w-4 text-gray-400" strokeWidth={1.5} />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500">Address</p>
-                <p className="text-sm font-medium text-gray-900 leading-snug">{customer.address || "—"}</p>
               </div>
             </div>
 

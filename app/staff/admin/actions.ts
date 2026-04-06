@@ -4,6 +4,14 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const JWT_TTL_SECONDS = 60 * 60 * 24;
+
+async function clearSessionCookies() {
+  const cookieStore = await cookies();
+  cookieStore.delete('token');
+  cookieStore.delete('role');
+  cookieStore.delete('dp_id');
+}
 
 export async function adminLogin(_prevState: unknown, formData: FormData) {
   const email = formData.get('email');
@@ -41,7 +49,7 @@ export async function adminLogin(_prevState: unknown, formData: FormData) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      maxAge: JWT_TTL_SECONDS,
     });
 
     cookieStore.set('role', role, {
@@ -49,7 +57,7 @@ export async function adminLogin(_prevState: unknown, formData: FormData) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: JWT_TTL_SECONDS,
     });
 
   } catch (error) {
@@ -61,9 +69,15 @@ export async function adminLogin(_prevState: unknown, formData: FormData) {
   redirect('/staff/admin');
 }
 
-export async function getAdminAuthHeader() {
+export async function getAdminAuthHeader(): Promise<HeadersInit> {
   const cookieStore = await cookies();
   const token = cookieStore.get('token')?.value;
+  if (!token) {
+    return {
+      'Content-Type': 'application/json'
+    };
+  }
+
   return {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
@@ -309,7 +323,7 @@ export async function fetchAllPaymentsAndUnpaidBills() {
       return { ok: false, data: { payments: [], unpaidBills: [] }, message: billsRes.message };
     }
 
-    type BillSummary = { id: number; status?: string };
+    type BillSummary = { id: number; status?: string; customerId: number; customerName: string; billingMonth: string; totalAmount: number; };
     const allBills = (Array.isArray(billsRes.data) ? billsRes.data : []) as BillSummary[];
 
     // Group unpaid bills for dropdowns
@@ -437,6 +451,13 @@ export async function fetchDashboardStats() {
 
 export async function fetchDashboardMetrics() {
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+    if (!token) {
+      await clearSessionCookies();
+      return { ok: false, unauthorized: true, message: 'Session expired. Please log in again.' };
+    }
+
     const headers = await getAdminAuthHeader();
 
     type CustomerRow = { id?: number };
@@ -461,6 +482,12 @@ export async function fetchDashboardMetrics() {
       fetch(`${API_URL}/api/delivery/schedule?date=${today}`, { headers, cache: 'no-store' }),
       fetch(`${API_URL}/api/delivery-person/pending`, { headers, cache: 'no-store' }),
     ]);
+
+    const responses = [customersRes, subsRes, billsRes, deliveryRes, pendingReqRes];
+    if (responses.some((res) => res.status === 401)) {
+      await clearSessionCookies();
+      return { ok: false, unauthorized: true, message: 'Session expired. Please log in again.' };
+    }
 
     const customersJson: unknown = customersRes.ok ? await customersRes.json() : [];
     const subsJson: unknown = subsRes.ok ? await subsRes.json() : [];

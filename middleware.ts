@@ -1,6 +1,30 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+function isJwtExpired(token: string) {
+  try {
+    const payloadBase64 = token.split('.')[1];
+    if (!payloadBase64) return true;
+
+    const normalized = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+    const payload = JSON.parse(atob(padded)) as { exp?: number };
+
+    if (!payload.exp) return true;
+    return payload.exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
+}
+
+function clearSessionAndRedirect(request: NextRequest, redirectPath: string) {
+  const response = NextResponse.redirect(new URL(redirectPath, request.url));
+  response.cookies.delete('token');
+  response.cookies.delete('role');
+  response.cookies.delete('dp_id');
+  return response;
+}
+
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
@@ -16,10 +40,21 @@ export function middleware(request: NextRequest) {
 
   // Get token from cookies
   const token = request.cookies.get('token')?.value;
-  
+
   // Get role from cookies (set during login)
   const roleCookie = request.cookies.get('role')?.value;
   const role = roleCookie || 'CUSTOMER';
+
+  // If token exists but is expired/invalid, clear session and force re-auth.
+  if (token && isJwtExpired(token)) {
+    if (path.startsWith('/staff/admin')) {
+      return clearSessionAndRedirect(request, '/staff/admin/login');
+    }
+    if (path.startsWith('/staff/dp')) {
+      return clearSessionAndRedirect(request, '/staff/dp/login');
+    }
+    return clearSessionAndRedirect(request, '/login');
+  }
 
   // 1. If trying to access protected route without token -> redirect to login
   if (isProtectedRoute && !token) {

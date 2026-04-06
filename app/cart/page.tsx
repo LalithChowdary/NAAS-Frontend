@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart, DeliveryFrequency, CartItem } from '@/components/cart/CartProvider';
 import Link from 'next/link';
 import { createSubscriptionAction } from '@/app/actions/subscription';
+import { getAddressesAction } from '@/app/actions/address';
+import AddressModal from '@/components/customer/AddressModal';
 
 const WEEK_DAYS = ['M', 'T', 'W', 'Th', 'F', 'S', 'Su'];
 const FULL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -16,9 +18,32 @@ export default function CartPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+
+  useEffect(() => {
+    async function loadAddresses() {
+      const res = await getAddressesAction();
+      if (res.data) {
+        setAddresses(res.data);
+        if (res.data.length > 0) {
+          setSelectedAddressId(res.data[0].id);
+        }
+      }
+    }
+    loadAddresses();
+  }, []);
+
   const handleCheckout = async () => {
     setIsSubmitting(true);
     setError(null);
+
+    if (!selectedAddressId) {
+      setError('Please select a delivery address');
+      setIsSubmitting(false);
+      return;
+    }
 
     const newspapers = items.filter(i => i.type === 'NEWSPAPER');
     const magazines = items.filter(i => i.type === 'MAGAZINE');
@@ -53,9 +78,10 @@ export default function CartPage() {
     const payload = {
       items: mappedItems,
       startDate: subscriptionSettings.startDate,
+      addressId: selectedAddressId
     };
 
-    const result = await createSubscriptionAction(payload);
+    const result = await createSubscriptionAction(payload as any);
     
     if (result.error) {
       setError(result.error);
@@ -300,6 +326,35 @@ export default function CartPage() {
               <span>Free</span>
             </div>
             
+            <div className="mb-6 pt-6 border-t border-slate-200/60">
+              <label className="text-xs font-semibold text-slate-900 uppercase tracking-widest mb-3 block">
+                Delivery Address
+              </label>
+              {addresses.length === 0 ? (
+                <div className="text-sm text-slate-500 bg-slate-100 p-3 rounded-xl mb-3">
+                  No saved addresses found.
+                </div>
+              ) : (
+                <select
+                  value={selectedAddressId || ''}
+                  onChange={e => setSelectedAddressId(Number(e.target.value))}
+                  className="w-full bg-white border border-slate-200 text-slate-900 text-sm rounded-xl py-3 px-4 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300 transition-all cursor-pointer shadow-sm shadow-slate-100/50 mb-3"
+                >
+                  {addresses.map(addr => (
+                    <option key={addr.id} value={addr.id}>
+                      {addr.label} - {addr.address.substring(0, 30)}{addr.address.length > 30 ? '...' : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <button
+                onClick={() => setShowAddressModal(true)}
+                className="text-xs font-medium text-slate-600 hover:text-slate-900 flex items-center gap-1 transition-colors"
+              >
+                + Add New Address
+              </button>
+            </div>
+            
             <div className="border-t border-slate-200/60 pt-6 mb-8 flex justify-between items-center">
               <span className="font-medium text-slate-900">Total Monthly</span>
               <span className="text-xl font-semibold text-slate-900">${total.toFixed(2)}</span>
@@ -333,6 +388,22 @@ export default function CartPage() {
             </button>
           </div>
         </div>
+      )}
+
+      {showAddressModal && (
+        <AddressModal
+          onClose={() => setShowAddressModal(false)}
+          onSuccess={async () => {
+            setShowAddressModal(false);
+            const res = await getAddressesAction();
+            if (res.data) {
+              setAddresses(res.data);
+              if (res.data.length > 0 && !selectedAddressId) {
+                setSelectedAddressId(res.data[0].id);
+              }
+            }
+          }}
+        />
       )}
     </div>
   );

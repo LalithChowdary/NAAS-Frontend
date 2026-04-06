@@ -4,8 +4,9 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const JWT_TTL_SECONDS = 60 * 60 * 24;
 
-export async function dpLogin(prevState: any, formData: FormData) {
+export async function dpLogin(_prevState: unknown, formData: FormData) {
   const email = formData.get('email');
   const password = formData.get('password');
 
@@ -37,14 +38,16 @@ export async function dpLogin(prevState: any, formData: FormData) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      path: '/'
+      path: '/',
+      maxAge: JWT_TTL_SECONDS,
     });
     // Set role
     cookieStore.set('role', data.role, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      path: '/'
+      path: '/',
+      maxAge: JWT_TTL_SECONDS,
     });
 
     // Fetch DP profile to get ID
@@ -59,11 +62,12 @@ export async function dpLogin(prevState: any, formData: FormData) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: '/'
+        path: '/',
+        maxAge: JWT_TTL_SECONDS,
       });
     }
 
-  } catch (error) {
+  } catch {
     return { error: 'Network error occurred. Please try again.' };
   }
 
@@ -88,7 +92,7 @@ export async function dpLogout() {
   redirect('/staff/dp/login');
 }
 
-export async function dpSignup(prevState: any, formData: FormData) {
+export async function dpSignup(_prevState: unknown, formData: FormData) {
   const name = formData.get('name') as string;
   const email = formData.get('email') as string;
   const phone = formData.get('phone') as string;
@@ -110,7 +114,7 @@ export async function dpSignup(prevState: any, formData: FormData) {
     }
 
     return { error: null, success: true };
-  } catch (error) {
+  } catch {
     return { error: 'Network error. Please try again.' };
   }
 }

@@ -4,8 +4,9 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const JWT_TTL_SECONDS = 60 * 60 * 24;
 
-export async function login(prevState: any, formData: FormData) {
+export async function login(_prevState: unknown, formData: FormData) {
   const email = formData.get('email');
   const password = formData.get('password');
 
@@ -34,7 +35,7 @@ export async function login(prevState: any, formData: FormData) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 1 week
+      maxAge: JWT_TTL_SECONDS,
     });
 
   } catch (error) {
@@ -46,7 +47,7 @@ export async function login(prevState: any, formData: FormData) {
   redirect('/');
 }
 
-export async function signup(prevState: any, formData: FormData) {
+export async function signup(_prevState: unknown, formData: FormData) {
   const name = formData.get('name');
   const email = formData.get('email');
   const password = formData.get('password');
@@ -77,7 +78,7 @@ export async function signup(prevState: any, formData: FormData) {
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         path: '/',
-        maxAge: 60 * 60 * 24 * 7,
+        maxAge: JWT_TTL_SECONDS,
       });
     }
 
@@ -93,5 +94,7 @@ export async function signup(prevState: any, formData: FormData) {
 export async function logout() {
   const cookieStore = await cookies();
   cookieStore.delete('token');
+  cookieStore.delete('role');
+  cookieStore.delete('dp_id');
   redirect('/login');
 }

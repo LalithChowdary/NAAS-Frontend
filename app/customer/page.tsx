@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import DashboardClient from './DashboardClient';
 import ProfileCardClient from './ProfileCardClient';
+import AddressListCard from '@/components/customer/AddressListCard';
 
 async function fetchWithToken(endpoint: string) {
   const cookieStore = await cookies();
@@ -21,12 +22,13 @@ async function fetchWithToken(endpoint: string) {
 }
 
 export default async function CustomerDashboard() {
-  const [user, profile, subscriptions, bills, deliveries] = await Promise.all([
+  const [user, profile, subscriptions, bills, deliveries, addresses] = await Promise.all([
     fetchWithToken('/api/auth/me'),
     fetchWithToken('/api/customer/profile'),
     fetchWithToken('/api/customer/subscriptions'),
     fetchWithToken('/api/customer/bills'),
-    fetchWithToken('/api/delivery/customer')
+    fetchWithToken('/api/delivery/customer'),
+    fetchWithToken('/api/customer/addresses')
   ]);
 
   const activeSubsCount = subscriptions?.filter((s: any) => s.status === 'ACTIVE' || s.status === 'SUSPENDED').length || 0;
@@ -90,8 +92,10 @@ export default async function CustomerDashboard() {
             </div>
           </Link>
 
-          {/* Card 3: Account Details */}
           <ProfileCardClient profile={profile} fallbackEmail={user?.email} />
+
+          {/* Card 4: Saved Addresses */}
+          <AddressListCard addresses={addresses || []} />
         </div>
 
         {/* Subscriptions Management Area */}
