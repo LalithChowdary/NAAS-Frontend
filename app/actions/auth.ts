@@ -18,7 +18,7 @@ export async function login(_prevState: unknown, formData: FormData) {
     const res = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, expectedRole: 'CUSTOMER' }),
     });
 
     if (!res.ok) {
@@ -28,9 +28,14 @@ export async function login(_prevState: unknown, formData: FormData) {
 
     const data = await res.json();
 
+    // Defense in Depth: Explicit frontend validation
+    if (data.role !== 'CUSTOMER') {
+      return { error: 'Access denied. Customers only.' };
+    }
+
     // Store token securely in an HTTP-only cookie
     const cookieStore = await cookies();
-    cookieStore.set('token', data.token, {
+    cookieStore.set('customer_token', data.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -73,7 +78,7 @@ export async function signup(_prevState: unknown, formData: FormData) {
     const data = await res.json();
     if (data.token) {
       const cookieStore = await cookies();
-      cookieStore.set('token', data.token, {
+      cookieStore.set('customer_token', data.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
@@ -93,8 +98,7 @@ export async function signup(_prevState: unknown, formData: FormData) {
 
 export async function logout() {
   const cookieStore = await cookies();
-  cookieStore.delete('token');
+  cookieStore.delete('customer_token');
   cookieStore.delete('role');
-  cookieStore.delete('dp_id');
   redirect('/login');
 }

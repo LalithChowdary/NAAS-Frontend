@@ -6,11 +6,11 @@ import { redirect } from 'next/navigation';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 const JWT_TTL_SECONDS = 60 * 60 * 24;
 
-async function clearSessionCookies() {
+export async function adminLogout() {
   const cookieStore = await cookies();
-  cookieStore.delete('token');
+  cookieStore.delete('admin_token');
   cookieStore.delete('role');
-  cookieStore.delete('dp_id');
+  redirect('/staff/admin/login');
 }
 
 export async function adminLogin(_prevState: unknown, formData: FormData) {
@@ -25,7 +25,7 @@ export async function adminLogin(_prevState: unknown, formData: FormData) {
     const res = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, expectedRole: 'ADMIN' }),
     });
 
     if (!res.ok) {
@@ -35,25 +35,15 @@ export async function adminLogin(_prevState: unknown, formData: FormData) {
 
     const data = await res.json();
 
-    // Check role precisely from backend AuthResponse
-    const role = data.role?.toUpperCase() || 'CUSTOMER';
-
-    if (role !== 'ADMIN') {
+    // Defense in Depth: Explicit frontend validation
+    if (data.role?.toUpperCase() !== 'ADMIN') {
       return { error: 'Access denied. Admins only.' };
     }
 
     // Role is ADMIN, proceed to set cookies
     const cookieStore = await cookies();
-    cookieStore.set('token', data.token, {
+    cookieStore.set('admin_token', data.token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: JWT_TTL_SECONDS,
-    });
-
-    cookieStore.set('role', role, {
-      httpOnly: false, // We might need this in middleware
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
@@ -71,7 +61,7 @@ export async function adminLogin(_prevState: unknown, formData: FormData) {
 
 export async function getAdminAuthHeader(): Promise<HeadersInit> {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('admin_token')?.value;
   if (!token) {
     return {
       'Content-Type': 'application/json'
@@ -452,9 +442,9 @@ export async function fetchDashboardStats() {
 export async function fetchDashboardMetrics() {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('token')?.value;
+    const token = cookieStore.get('admin_token')?.value;
     if (!token) {
-      await clearSessionCookies();
+      await adminLogout();
       return { ok: false, unauthorized: true, message: 'Session expired. Please log in again.' };
     }
 
@@ -485,7 +475,7 @@ export async function fetchDashboardMetrics() {
 
     const responses = [customersRes, subsRes, billsRes, deliveryRes, pendingReqRes];
     if (responses.some((res) => res.status === 401)) {
-      await clearSessionCookies();
+      await adminLogout();
       return { ok: false, unauthorized: true, message: 'Session expired. Please log in again.' };
     }
 

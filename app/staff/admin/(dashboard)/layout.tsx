@@ -15,6 +15,7 @@ import {
   Calendar,
   MapPin
 } from "lucide-react";
+import { adminLogout } from "../actions";
 
 export default function AdminLayout({
   children,
@@ -79,12 +80,7 @@ export default function AdminLayout({
         </nav>
 
         <div className="p-4 border-t border-[#EFEFEF] mb-4">
-          <form action={async () => {
-             await fetch('/api/auth/logout', { method: 'POST' });
-             document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-             document.cookie = "role=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-             window.location.href = '/staff/admin/login';
-          }}>
+          <form action={adminLogout}>
             <button
               type="submit"
               className="w-full flex items-center px-4 py-3 rounded-xl text-gray-500 hover:bg-[#F5F5F7]/50 hover:text-gray-900 transition-colors group"

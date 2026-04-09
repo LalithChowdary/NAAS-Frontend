@@ -10,7 +10,7 @@ export async function createSubscriptionAction(payload: {
   addressId?: number;
 }) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('customer_token')?.value;
 
   if (!token) {
     return { error: 'You must be logged in to subscribe.' };
@@ -45,7 +45,7 @@ export async function createSubscriptionAction(payload: {
 
 export async function suspendSubscriptionAction(subId: number, suspendStartDate: string, suspendEndDate: string) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('customer_token')?.value;
   if (!token) return { error: 'Unauthorized' };
 
   try {
@@ -71,7 +71,7 @@ export async function suspendSubscriptionAction(subId: number, suspendStartDate:
 
 export async function cancelSubscriptionAction(subId: number, cancelDate: string) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('customer_token')?.value;
   if (!token) return { error: 'Unauthorized' };
 
   try {
@@ -103,7 +103,7 @@ export async function updateSubscriptionItemAction(
   stopEndDate: string | null
 ) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('customer_token')?.value;
   if (!token) return { error: 'Unauthorized' };
 
   try {

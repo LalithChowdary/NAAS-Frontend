@@ -6,6 +6,13 @@ import { redirect } from 'next/navigation';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 const JWT_TTL_SECONDS = 60 * 60 * 24;
 
+async function clearSessionCookies() {
+  const cookieStore = await cookies();
+  cookieStore.delete('dp_token');
+  cookieStore.delete('role');
+  cookieStore.delete('dp_id');
+}
+
 export async function dpLogin(_prevState: unknown, formData: FormData) {
   const email = formData.get('email');
   const password = formData.get('password');
@@ -18,7 +25,7 @@ export async function dpLogin(_prevState: unknown, formData: FormData) {
     const res = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, expectedRole: 'DELIVERY_PERSON' }),
     });
 
     const data = await res.json();
@@ -27,14 +34,14 @@ export async function dpLogin(_prevState: unknown, formData: FormData) {
       return { error: data.message || 'Login failed' };
     }
 
-    // Role validation
+    // Defense in Depth: Explicit frontend validation
     if (data.role !== 'DELIVERY_PERSON' && data.role !== 'DELIVERY') {
       return { error: 'Access denied. Delivery personnel only.' };
     }
 
     const cookieStore = await cookies();
     // Set token
-    cookieStore.set('token', data.token, {
+    cookieStore.set('dp_token', data.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -77,7 +84,7 @@ export async function dpLogin(_prevState: unknown, formData: FormData) {
 
 export async function getDpAuthHeader() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('dp_token')?.value;
   return {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
@@ -86,7 +93,7 @@ export async function getDpAuthHeader() {
 
 export async function dpLogout() {
   const cookieStore = await cookies();
-  cookieStore.delete('token');
+  cookieStore.delete('dp_token');
   cookieStore.delete('role');
   cookieStore.delete('dp_id');
   redirect('/staff/dp/login');
@@ -204,7 +211,7 @@ export async function fetchDpDeliveriesByDate(dateStr: string) {
 
 export async function fetchDpHistory() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('dp_token')?.value;
   if (!token) {
     throw new Error('Session expired. Please log in again.');
   }

@@ -4,7 +4,7 @@ import HeaderActions from './HeaderActions';
 
 export default async function Header() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token');
+  const token = cookieStore.get('customer_token');
   const isAuthenticated = !!token;
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-black/[0.04]">

@@ -5,7 +5,7 @@ const BACKEND_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808
 
 async function getDeliveries() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('customer_token')?.value;
 
   if (!token) return [];
 
@@ -28,7 +28,7 @@ async function getDeliveries() {
 
 async function getSubscriptions() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('customer_token')?.value;
 
   if (!token) return [];
 

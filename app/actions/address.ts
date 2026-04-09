@@ -6,7 +6,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 export async function getAddressesAction() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('customer_token')?.value;
 
   if (!token) return { data: null, error: 'Unauthorized' };
 
@@ -32,7 +32,7 @@ export async function getAddressesAction() {
 
 export async function createAddressAction(payload: { label: string; address: string; latitude: number; longitude: number; house?: string; area?: string; landmark?: string; }) {
   const cookieStore = await cookies();
-  const token = cookieStore.get('token')?.value;
+  const token = cookieStore.get('customer_token')?.value;
 
   if (!token) return { data: null, error: 'Unauthorized' };
 
