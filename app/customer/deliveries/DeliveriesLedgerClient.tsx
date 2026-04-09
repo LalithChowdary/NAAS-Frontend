@@ -231,7 +231,7 @@ export default function DeliveriesLedgerClient({
                    </p>
                 </div>
                 <div className="text-right">
-                   <div className="text-2xl font-medium tracking-tight text-slate-900">${totalCostForDay.toFixed(2)}</div>
+                   <div className="text-2xl font-medium tracking-tight text-slate-900">₹{totalCostForDay.toFixed(2)}</div>
                    <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest mt-1">Daily Total</div>
                 </div>
             </header>
@@ -261,8 +261,7 @@ export default function DeliveriesLedgerClient({
                                     </span>
                                 </div>
                             </div>
-                            <div className="font-medium text-slate-500 tabular-nums">
-                                ${(delivery.dailyCost || 0).toFixed(2)}
+                            <div className="font-medium text-slate-500 tabular-nums">₹{(delivery.dailyCost || 0).toFixed(2)}
                             </div>
                         </div>
                     ))}

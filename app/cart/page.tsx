@@ -134,9 +134,9 @@ export default function CartPage() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <p className="text-sm text-slate-900 font-medium">${adjustedPrice.toFixed(2)} <span className="text-slate-500 font-light">/ month</span></p>
+              <p className="text-sm text-slate-900 font-medium">₹{adjustedPrice.toFixed(2)} <span className="text-slate-500 font-light">/ {item.type === 'NEWSPAPER' ? 'paper' : 'magazine'}</span></p>
               {hasDiscount && (
-                <p className="text-xs text-slate-400 line-through">${item.price.toFixed(2)}</p>
+                <p className="text-xs text-slate-400 line-through">₹{item.price.toFixed(2)}</p>
               )}
             </div>
           </div>
@@ -159,7 +159,7 @@ export default function CartPage() {
           </div>
 
           <div className="text-right w-20">
-            <span className="font-semibold text-slate-900">${(adjustedPrice * item.quantity).toFixed(2)}</span>
+            <span className="font-semibold text-slate-900">₹{(adjustedPrice * item.quantity).toFixed(2)}</span>
           </div>
 
           <button 
@@ -319,7 +319,7 @@ export default function CartPage() {
             
             <div className="flex justify-between items-center mb-4 text-sm font-light text-slate-500">
               <span>Subtotal</span>
-              <span>${total.toFixed(2)}</span>
+              <span>₹{total.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center mb-6 text-sm font-light text-slate-500">
               <span>Delivery Fee</span>
@@ -357,7 +357,7 @@ export default function CartPage() {
             
             <div className="border-t border-slate-200/60 pt-6 mb-8 flex justify-between items-center">
               <span className="font-medium text-slate-900">Total Monthly</span>
-              <span className="text-xl font-semibold text-slate-900">${total.toFixed(2)}</span>
+              <span className="text-xl font-semibold text-slate-900">₹{total.toFixed(2)}</span>
             </div>
 
             {error && (

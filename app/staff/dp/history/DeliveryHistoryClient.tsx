@@ -180,7 +180,7 @@ export default function DeliveryHistoryClient() {
               </p>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-medium tracking-tight text-slate-900">${totalDailyPayout.toFixed(2)}</div>
+              <div className="text-2xl font-medium tracking-tight text-slate-900">₹{totalDailyPayout.toFixed(2)}</div>
               <div className="text-xs font-semibold text-slate-400 uppercase tracking-widest mt-1">Daily Payout</div>
             </div>
           </header>
@@ -224,8 +224,7 @@ export default function DeliveryHistoryClient() {
                         )}
                       </div>
                     </div>
-                    <div className="font-medium text-slate-500 tabular-nums">
-                      ${Number(delivery.payout || 0).toFixed(2)}
+                    <div className="font-medium text-slate-500 tabular-nums">₹{Number(delivery.payout || 0).toFixed(2)}
                     </div>
                   </div>
                 );
