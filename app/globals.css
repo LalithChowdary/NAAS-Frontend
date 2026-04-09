@@ -12,13 +12,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
@@ -34,5 +27,3 @@ body {
   animation: wiggle 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Enable manual dark mode via class */
-@custom-variant dark (&:is(.dark *));
