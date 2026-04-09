@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchTodayDeliveries, dpLogout } from "./actions";
-import { Loader2, UserCircle, MapPin, Package, LogOut, FileText } from "lucide-react";
+import { fetchTodayDeliveries, dpLogout, updateDeliveryStatusAction } from "./actions";
+import { Loader2, UserCircle, MapPin, Package, LogOut, FileText, CheckCircle2, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface DeliveryItem {
@@ -13,6 +13,12 @@ interface DeliveryItem {
   publicationName: string;
   deliveryStatus: string;
   assignedTo: string;
+  routeSequence?: number;
+  hubName?: string;
+  hubLat?: number;
+  hubLng?: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 import DeliveryHeader from "./components/DeliveryHeader";
@@ -28,7 +34,9 @@ export default function DeliveryDashboard() {
       try {
         setLoading(true);
         const data = await fetchTodayDeliveries();
-        setDeliveries(Array.isArray(data) ? data : []);
+        let deliveriesArr = Array.isArray(data) ? data : [];
+        deliveriesArr.sort((a, b) => (a.routeSequence || 0) - (b.routeSequence || 0));
+        setDeliveries(deliveriesArr);
       } catch (err: any) {
         setError("Failed to load today's deliveries.");
       } finally {
@@ -44,8 +52,42 @@ export default function DeliveryDashboard() {
     day: 'numeric'
   });
 
+  const generateGoogleMapsUrl = () => {
+    const stops = deliveries.filter((d) => d.latitude && d.longitude);
+    if (!deliveries || deliveries.length === 0 || stops.length === 0) return "#";
+    
+    const originLat = deliveries[0].hubLat;
+    const originLng = deliveries[0].hubLng;
+    if (!originLat || !originLng) return "#";
+
+    const waypoints = stops.slice(0, stops.length - 1).map(d => `${d.latitude},${d.longitude}`).join('|');
+    
+    let url = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}`;
+    url += `&destination=${stops[stops.length - 1].latitude},${stops[stops.length - 1].longitude}`;
+    if (waypoints.length > 0) {
+      url += `&waypoints=${waypoints}`;
+    }
+    return url;
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleStatusUpdate = async (subscriptionId: number, status: string) => {
+    try {
+      await updateDeliveryStatusAction(subscriptionId.toString(), status);
+      // Optimistically update local UI state immediately 
+      setDeliveries((prev) => 
+        prev.map(d => d.subscriptionId === subscriptionId ? { ...d, deliveryStatus: status } : d)
+      );
+    } catch (err) {
+      alert("Failed to update status. Please try again.");
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#FBFBFD] pb-20">
+    <div className="min-h-screen bg-[#FBFBFD] pb-20 print:bg-white print:pb-0">
       
       <DeliveryHeader title={`Today's Deliveries — ${todayStr}`} />
 
@@ -54,15 +96,28 @@ export default function DeliveryDashboard() {
         
         {/* Stats Row */}
         {!loading && !error && deliveries.length > 0 && (
-          <div className="bg-white rounded-2xl p-4 border border-[#EFEFEF] flex items-center justify-between shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
-             <div className="flex items-center gap-3">
-               <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center">
-                 <Package className="h-5 w-5" strokeWidth={1.5} />
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-2xl p-5 border border-[#EFEFEF] shadow-[0_2px_12px_rgba(0,0,0,0.02)] print:border-black print:shadow-none">
+             <div className="flex items-center gap-4">
+               <div className="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center print:border print:border-black">
+                 <Package className="h-6 w-6" strokeWidth={1.5} />
                </div>
                <div>
-                 <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Total Assigned</p>
-                 <p className="text-xl font-medium text-gray-900 leading-none mt-1">{deliveries.length}</p>
+                 <p className="text-xs text-gray-400 tracking-wider font-bold">STARTING HUB</p>
+                 <p className="text-lg font-medium tracking-tight text-gray-900 mt-0.5">
+                   {deliveries[0]?.hubName || "Standard Collection"}
+                 </p>
                </div>
+             </div>
+
+             <div className="flex h-full gap-2 items-center print:hidden">
+                <button onClick={handlePrint} className="px-4 py-2 text-sm font-medium border border-gray-200 text-gray-700 bg-white hover:bg-gray-50 rounded-full flex items-center gap-2 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-printer"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                  Print Schedule
+                </button>
+                <a href={generateGoogleMapsUrl()} target="_blank" rel="noreferrer" className="px-5 py-2 text-sm font-medium text-white border border-transparent bg-black hover:bg-gray-800 rounded-full flex items-center gap-2 transition-colors shadow-sm">
+                  <MapPin className="h-4 w-4" strokeWidth={2} />
+                  View Route on Maps
+                </a>
              </div>
           </div>
         )}
@@ -97,21 +152,46 @@ export default function DeliveryDashboard() {
               return (
                 <div 
                   key={`${delivery.subscriptionId}-${index}`} 
-                  className="bg-white border border-[#EFEFEF] rounded-3xl p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] active:scale-[0.98] transition-transform duration-200"
+                  className="bg-white border flex flex-col sm:flex-row gap-4 border-[#EFEFEF] rounded-3xl p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] print:border-b print:rounded-none print:shadow-none"
                 >
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900 leading-tight">
-                        {delivery.customerName || `Customer #${delivery.customerId}`}
-                      </h3>
-                      <div className="flex items-start gap-1.5 mt-2 text-sm text-gray-500">
-                        <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-gray-400" strokeWidth={1.5} />
-                        <span className="leading-snug">{delivery.address || "No address provided"}</span>
+                  <div className="flex sm:flex-col items-center sm:w-16 flex-shrink-0 pt-1">
+                     <span className="w-8 h-8 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center text-sm font-bold print:border print:border-black">
+                       {delivery.routeSequence || index + 1}
+                     </span>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 leading-tight">
+                          {delivery.customerName || `Customer #${delivery.customerId}`}
+                        </h3>
+                        <div className="flex items-start gap-1.5 mt-2 text-sm text-gray-500 max-w-lg">
+                          <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-gray-400" strokeWidth={1.5} />
+                          <span className="leading-snug">{delivery.address || "No address provided"}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-1 items-center flex-shrink-0 print:hidden">
+                        {delivery.deliveryStatus === 'PENDING' ? (
+                          <>
+                            <button onClick={() => handleStatusUpdate(delivery.subscriptionId, 'DELIVERED')} className="p-1.5 rounded-full hover:bg-green-50 text-gray-300 hover:text-green-600 transition-colors" title="Mark Delivered">
+                              <CheckCircle2 className="w-7 h-7" strokeWidth={1.5} />
+                            </button>
+                            <button onClick={() => handleStatusUpdate(delivery.subscriptionId, 'CANCELLED')} className="p-1.5 rounded-full hover:bg-red-50 text-gray-300 hover:text-red-500 transition-colors" title="Mark Not Delivered">
+                              <XCircle className="w-7 h-7" strokeWidth={1.5} />
+                            </button>
+                          </>
+                        ) : delivery.deliveryStatus === 'DELIVERED' ? (
+                           <span className="inline-flex items-center gap-1 text-sm font-medium text-green-600 bg-green-50 px-2.5 py-1 rounded-lg">
+                             <CheckCircle2 className="w-4 h-4" /> Delivered
+                           </span>
+                        ) : (
+                           <span className="inline-flex items-center gap-1 text-sm font-medium text-red-600 bg-red-50 px-2.5 py-1 rounded-lg">
+                             <XCircle className="w-4 h-4" /> Failed
+                           </span>
+                        )}
                       </div>
                     </div>
-                    {/* Placeholder for status checkbox in future */}
-                    <div className="h-6 w-6 rounded-full border-2 border-gray-200 flex-shrink-0"></div>
-                  </div>
 
                   <div className="bg-[#FBFBFD] rounded-2xl p-4 border border-[#EFEFEF]">
                      <div className="flex items-center gap-1.5 mb-2.5 px-0.5">
@@ -119,7 +199,7 @@ export default function DeliveryDashboard() {
                        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Publications</span>
                      </div>
                      
-                     <div className="space-y-1.5">
+                      <div className="space-y-1.5">
                         {pubs.length > 0 ? (
                           pubs.map((pub, idx) => (
                             <div key={idx} className="flex items-center justify-between text-sm">
@@ -130,8 +210,9 @@ export default function DeliveryDashboard() {
                         ) : (
                           <p className="text-sm text-gray-400 italic">No publications listed</p>
                         )}
-                     </div>
-                  </div>
+                      </div>
+                   </div>
+                 </div>
                 </div>
               );
             })}

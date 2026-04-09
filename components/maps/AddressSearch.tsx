@@ -8,10 +8,11 @@ import usePlacesAutocomplete, {
 
 interface AddressSearchProps {
   onSelectAddress: (address: string, lat: number, lng: number) => void;
+  onInputChange?: (value: string) => void;
   defaultValue?: string;
 }
 
-export default function AddressSearch({ onSelectAddress, defaultValue = '' }: AddressSearchProps) {
+export default function AddressSearch({ onSelectAddress, onInputChange, defaultValue = '' }: AddressSearchProps) {
   const {
     ready,
     value,
@@ -26,8 +27,15 @@ export default function AddressSearch({ onSelectAddress, defaultValue = '' }: Ad
     defaultValue,
   });
 
+  React.useEffect(() => {
+    if (defaultValue && defaultValue !== value) {
+      setValue(defaultValue, false);
+    }
+  }, [defaultValue]);
+
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue(e.target.value);
+    onInputChange?.(e.target.value);
   };
 
   const handleSelect = ({ description }: { description: string }) => () => {

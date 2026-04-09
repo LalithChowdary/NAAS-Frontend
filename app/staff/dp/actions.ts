@@ -141,6 +141,23 @@ export async function fetchTodayDeliveries() {
   return res.json();
 }
 
+export async function updateDeliveryStatusAction(subscriptionId: string, status: string) {
+  const cookieStore = await cookies();
+  const dpId = cookieStore.get('dp_id')?.value;
+  if (!dpId) throw new Error('Delivery Person profile not bound');
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const res = await fetch(`${API_URL}/api/delivery/status?deliveryPersonId=${dpId}&subscriptionId=${subscriptionId}&date=${today}&status=${status}`, {
+    method: 'POST',
+    headers: await getDpAuthHeader(),
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to update delivery status');
+  }
+}
+
 export async function fetchDpProfile() {
   const res = await fetch(`${API_URL}/api/delivery-person/me`, {
     headers: await getDpAuthHeader(),

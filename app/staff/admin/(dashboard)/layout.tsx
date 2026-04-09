@@ -12,7 +12,8 @@ import {
   LogOut,
   LayoutDashboard,
   Truck,
-  Calendar
+  Calendar,
+  MapPin
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -27,6 +28,7 @@ export default function AdminLayout({
     { name: "Customers", href: "/staff/admin/customers", icon: Users },
     { name: "Delivery Personnel", href: "/staff/admin/delivery", icon: Truck },
     { name: "Delivery Schedule", href: "/staff/admin/delivery/schedule", icon: Calendar },
+    { name: "Delivery Hubs", href: "/staff/admin/hubs", icon: MapPin },
     { name: "Publications", href: "/staff/admin/publications", icon: BookOpen },
     { name: "Subscriptions", href: "/staff/admin/subscriptions", icon: RefreshCcw },
     { name: "Billing", href: "/staff/admin/billing", icon: Banknote },

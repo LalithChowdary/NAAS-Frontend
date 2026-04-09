@@ -23,6 +23,7 @@ export default function MapPicker({ lat, lng, onLocationChange, onGeocodingState
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [mapCenter, setMapCenter] = useState({ lat: lat || DEFAULT_CENTER.lat, lng: lng || DEFAULT_CENTER.lng });
+  const [isSatellite, setIsSatellite] = useState(false);
 
   useEffect(() => {
     geocoderRef.current = new google.maps.Geocoder();
@@ -99,6 +100,7 @@ export default function MapPicker({ lat, lng, onLocationChange, onGeocodingState
           gestureHandling: 'greedy',
           styles: mapStyles,
           clickableIcons: false,
+          mapTypeId: isSatellite ? 'satellite' : 'roadmap',
         }}
       />
 
@@ -136,6 +138,20 @@ export default function MapPicker({ lat, lng, onLocationChange, onGeocodingState
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-700">
           <circle cx="12" cy="12" r="3"/>
           <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+        </svg>
+      </button>
+
+      {/* Satellite toggle button */}
+      <button
+        type="button"
+        onClick={() => setIsSatellite(!isSatellite)}
+        className="absolute bottom-16 right-4 z-10 bg-white rounded-full p-2.5 shadow-lg border border-slate-100 hover:shadow-xl transition-shadow active:scale-95"
+        aria-label="Toggle satellite view"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isSatellite ? "text-blue-600" : "text-slate-700"}>
+          <polygon points="12 2 2 7 12 12 22 7 12 2" />
+          <polyline points="2 12 12 17 22 12" />
+          <polyline points="2 17 12 22 22 17" />
         </svg>
       </button>
     </div>

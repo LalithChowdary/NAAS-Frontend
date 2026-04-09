@@ -94,3 +94,40 @@ export async function cancelSubscriptionAction(subId: number, cancelDate: string
     return { error: 'Network error' };
   }
 }
+
+export async function updateSubscriptionItemAction(
+  subId: string | number,
+  itemId: string,
+  status: string | null,
+  stopStartDate: string | null,
+  stopEndDate: string | null
+) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('token')?.value;
+  if (!token) return { error: 'Unauthorized' };
+
+  try {
+    const payload: any = {};
+    if (status) payload.status = status;
+    if (stopStartDate) payload.stopStartDate = stopStartDate;
+    if (stopEndDate) payload.stopEndDate = stopEndDate;
+
+    const res = await fetch(`${API_URL}/api/customer/subscriptions/${subId}/items/${itemId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      try { return { error: JSON.parse(text).message }; }
+      catch { return { error: text || 'Failed to update item' }; }
+    }
+    return { success: true };
+  } catch (err) {
+    return { error: 'Network error' };
+  }
+}
