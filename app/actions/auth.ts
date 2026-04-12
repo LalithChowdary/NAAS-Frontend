@@ -93,7 +93,7 @@ export async function signup(_prevState: unknown, formData: FormData) {
   }
 
   // If token was set, this redirects safely.
-  redirect('/');
+  redirect('/customer?onboarding=true');
 }
 
 export async function logout() {

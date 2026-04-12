@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AddressModal from './AddressModal';
 import { useRouter } from 'next/navigation';
 
@@ -18,6 +18,16 @@ export type Address = {
 export default function AddressListCard({ addresses }: { addresses: Address[] }) {
   const [showModal, setShowModal] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('onboarding') === 'true') {
+        setShowModal(true);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, []);
 
   return (
     <>
