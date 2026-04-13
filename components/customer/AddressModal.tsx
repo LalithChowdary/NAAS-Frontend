@@ -5,13 +5,14 @@ import { useGoogleMaps } from '../maps/GoogleMapsProvider';
 import MapPicker from '../maps/MapPicker';
 import AddressSearch from '../maps/AddressSearch';
 import AddressForm, { type AddressFormData } from './AddressForm';
-import { createAddressAction } from '@/app/actions/address';
+import { createAddressAction, updateAddressAction } from '@/app/actions/address';
 
 const DEFAULT_CENTER = { lat: 28.6139, lng: 77.209 }; // Delhi fallback
 
-interface AddressModalProps {
+export interface AddressModalProps {
   onClose: () => void;
   onSuccess: () => void;
+  existingAddress?: any; // Replace with proper type or pass the address object
 }
 
 type Phase = 'loading-gps' | 'map' | 'form';
@@ -112,27 +113,30 @@ function ModalHeader({
 /* ─────────────────────────────────────────────
    Main component
 ───────────────────────────────────────────── */
-export default function AddressModal({ onClose, onSuccess }: AddressModalProps) {
+export default function AddressModal({ onClose, onSuccess, existingAddress }: AddressModalProps) {
   const { isLoaded, loadError } = useGoogleMaps();
 
-  const [phase, setPhase] = useState<Phase>('loading-gps');
+  const [phase, setPhase] = useState<Phase>(existingAddress ? 'form' : 'loading-gps');
   const [saving, setSaving] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState<AddressFormData>({
-    label: 'Home',
-    address: '',
-    house: '',
-    area: '',
-    landmark: '',
-    latitude: DEFAULT_CENTER.lat,
-    longitude: DEFAULT_CENTER.lng,
+    label: existingAddress?.label || 'Home',
+    address: existingAddress?.address || '',
+    house: existingAddress?.house || '',
+    area: existingAddress?.area || '',
+    landmark: existingAddress?.landmark || '',
+    latitude: existingAddress?.latitude || DEFAULT_CENTER.lat,
+    longitude: existingAddress?.longitude || DEFAULT_CENTER.lng,
   });
 
   // ── GPS on mount ──────────────────────────────
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || existingAddress) {
+      if (existingAddress) setPhase('form');
+      return;
+    }
 
     if (!navigator.geolocation) {
       setPhase('map');
@@ -189,7 +193,7 @@ export default function AddressModal({ onClose, onSuccess }: AddressModalProps) 
     setSaving(true);
     setError('');
 
-    const res = await createAddressAction({
+    const payload = {
       label: formData.label,
       address: formData.address,
       latitude: formData.latitude,
@@ -197,7 +201,11 @@ export default function AddressModal({ onClose, onSuccess }: AddressModalProps) 
       house: formData.house || undefined,
       area: formData.area || undefined,
       landmark: formData.landmark || undefined,
-    });
+    };
+
+    const res = existingAddress
+      ? await updateAddressAction(existingAddress.id, payload)
+      : await createAddressAction(payload);
 
     if (res?.error) {
       setError(res.error);

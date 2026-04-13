@@ -40,11 +40,12 @@ export default function DeliveriesLedgerClient({
   today.setHours(0,0,0,0);
 
   const [selectedDate, setSelectedDate] = useState<Date>(today);
+  const [anchorDate, setAnchorDate] = useState<Date>(today);
   
-  // Generate slider array from -30 to +30 days
+  // Generate slider array from -30 to +30 days around anchor
   const sliderDates = useMemo(() => {
     const dates: Date[] = [];
-    const base = new Date();
+    const base = new Date(anchorDate);
     base.setHours(0,0,0,0);
     for (let i = -30; i <= 30; i++) {
         const d = new Date(base);
@@ -52,19 +53,22 @@ export default function DeliveriesLedgerClient({
         dates.push(d);
     }
     return dates;
-  }, []);
+  }, [anchorDate]);
 
   const sliderRef = useRef<HTMLDivElement>(null);
   
-  // Auto-scroll to selected/today
+  // Auto-scroll to selected/anchor
   useEffect(() => {
     if (sliderRef.current) {
-        const targetElement = sliderRef.current.querySelector('[data-isselected="true"]') || sliderRef.current.querySelector('[data-istoday="true"]');
-        if (targetElement) {
-            targetElement.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-        }
+        // slightly wrap in setTimeout to allow render layout to complete
+        setTimeout(() => {
+            const targetElement = sliderRef.current?.querySelector('[data-isselected="true"]') || sliderRef.current?.querySelector('[data-istoday="true"]');
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+        }, 50);
     }
-  }, []);
+  }, [anchorDate]);
 
   const selectedDateString = [
     selectedDate.getFullYear(),
@@ -172,15 +176,36 @@ export default function DeliveriesLedgerClient({
       <main className="max-w-3xl mx-auto mt-8 px-6">
         <section className="mb-10 w-full overflow-hidden">
             <div className="flex items-center justify-between mb-4">
-               <h2 className="text-sm font-medium text-slate-500 uppercase tracking-widest">Select Date</h2>
+               <div className="flex items-center gap-3">
+                 <h2 className="text-sm font-medium text-slate-500 uppercase tracking-widest">Select Date</h2>
+                 <div className="relative group cursor-pointer w-6 h-6 flex items-center justify-center overflow-hidden">
+                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 group-hover:text-slate-900 transition-colors">
+                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                     <line x1="16" y1="2" x2="16" y2="6"/>
+                     <line x1="8" y1="2" x2="8" y2="6"/>
+                     <line x1="3" y1="10" x2="21" y2="10"/>
+                   </svg>
+                   <input 
+                     type="date" 
+                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                     value={selectedDateString}
+                     onChange={(e) => {
+                       const val = e.target.value;
+                       if (!val) return;
+                       const [y, m, d] = val.split('-');
+                       const newDate = new Date(Number(y), Number(m)-1, Number(d), 0,0,0,0);
+                       setAnchorDate(newDate);
+                       setSelectedDate(newDate);
+                     }}
+                   />
+                 </div>
+               </div>
+               
                {selectedDate.getTime() !== today.getTime() && (
                   <button 
                     onClick={() => {
                        setSelectedDate(today);
-                       setTimeout(() => {
-                           const el = sliderRef.current?.querySelector('[data-istoday="true"]');
-                           if (el) el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-                       }, 50);
+                       setAnchorDate(today);
                     }} 
                     className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition"
                   >
@@ -203,7 +228,10 @@ export default function DeliveriesLedgerClient({
                            key={i}
                            data-istoday={isToday}
                            data-isselected={isSelected}
-                           onClick={() => setSelectedDate(d)}
+                           onClick={() => {
+                             setSelectedDate(d);
+                             setAnchorDate(d);
+                           }}
                            className={`snap-center flex-shrink-0 flex flex-col items-center justify-center w-14 h-20 rounded-full cursor-pointer transition-all duration-300 ${
                                isSelected 
                                  ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 scale-105' 

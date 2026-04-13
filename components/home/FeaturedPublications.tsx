@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from 'react';
 import PublicationCard from './PublicationCard';
 
 interface Publication {
@@ -10,6 +13,8 @@ interface Publication {
 }
 
 export default function FeaturedPublications({ publications }: { publications: Publication[] }) {
+  const [filter, setFilter] = useState<'All' | 'Newspapers' | 'Magazines'>('All');
+
   if (!publications || publications.length === 0) {
     return (
       <section className="w-full max-w-7xl mx-auto px-6 py-24 text-center">
@@ -39,15 +44,36 @@ export default function FeaturedPublications({ publications }: { publications: P
           </p>
         </div>
         <div className="flex gap-2">
-          {/* Optional filter pills visual mockup */}
-          <span className="px-4 py-2 rounded-full bg-slate-900 text-white text-xs font-medium cursor-pointer">All</span>
-          <span className="px-4 py-2 rounded-full bg-transparent border border-slate-200 text-slate-600 text-xs font-medium hover:bg-slate-50 cursor-pointer transition-colors">Newspapers</span>
-          <span className="px-4 py-2 rounded-full bg-transparent border border-slate-200 text-slate-600 text-xs font-medium hover:bg-slate-50 cursor-pointer transition-colors">Magazines</span>
+          <span 
+            onClick={() => setFilter('All')}
+            className={`px-4 py-2 rounded-full text-xs font-medium cursor-pointer transition-colors ${filter === 'All' ? 'bg-slate-900 text-white' : 'bg-transparent border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+          >
+            All
+          </span>
+          <span 
+            onClick={() => setFilter('Newspapers')}
+            className={`px-4 py-2 rounded-full text-xs font-medium cursor-pointer transition-colors ${filter === 'Newspapers' ? 'bg-slate-900 text-white' : 'bg-transparent border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+          >
+            Newspapers
+          </span>
+          <span 
+            onClick={() => setFilter('Magazines')}
+            className={`px-4 py-2 rounded-full text-xs font-medium cursor-pointer transition-colors ${filter === 'Magazines' ? 'bg-slate-900 text-white' : 'bg-transparent border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+          >
+            Magazines
+          </span>
         </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {publications.map((pub) => (
+        {publications
+          .filter(pub => {
+            if (filter === 'All') return true;
+            if (filter === 'Newspapers') return pub.type.toUpperCase() === 'NEWSPAPER';
+            if (filter === 'Magazines') return pub.type.toUpperCase() === 'MAGAZINE';
+            return true;
+          })
+          .map((pub) => (
           <PublicationCard key={pub.id} publication={pub} />
         ))}
       </div>

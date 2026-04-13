@@ -2,7 +2,13 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { cancelSubscriptionAction, suspendSubscriptionAction, updateSubscriptionItemAction } from '../actions/subscription';
+import { 
+  cancelSubscriptionAction, 
+  suspendSubscriptionAction, 
+  updateSubscriptionItemAction,
+  removeSubscriptionSuspensionAction,
+  removeSubscriptionItemSuspensionAction 
+} from '../actions/subscription';
 
 type SubscriptionItem = {
   id: string;
@@ -27,7 +33,7 @@ type Subscription = {
 
 export default function DashboardClient({ subscriptions }: { subscriptions: Subscription[] }) {
   const router = useRouter();
-  const [modal, setModal] = useState<{ type: 'PAUSE_SUB' | 'CANCEL_SUB' | 'PAUSE_ITEM' | 'CANCEL_ITEM' | null; subId: number | string | null; itemId?: string | null }>({ type: null, subId: null });
+  const [modal, setModal] = useState<{ type: 'PAUSE_SUB' | 'EDIT_PAUSE_SUB' | 'CANCEL_SUB' | 'PAUSE_ITEM' | 'EDIT_PAUSE_ITEM' | 'CANCEL_ITEM' | null; subId: number | string | null; itemId?: string | null }>({ type: null, subId: null });
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,12 +50,14 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
     setError('');
 
     let res;
-    if (modal.type === 'PAUSE_SUB') {
+    if (modal.type === 'PAUSE_SUB' || modal.type === 'EDIT_PAUSE_SUB') {
       res = await suspendSubscriptionAction(modal.subId as number, startDate, endDate);
     } else if (modal.type === 'CANCEL_SUB') {
       res = await cancelSubscriptionAction(modal.subId as number, startDate);
-    } else if (modal.type === 'PAUSE_ITEM' && modal.itemId) {
-      res = await updateSubscriptionItemAction(modal.subId, modal.itemId, 'SUSPENDED', startDate, endDate);
+    } else if (modal.type === 'PAUSE_ITEM' || modal.type === 'EDIT_PAUSE_ITEM') {
+      if (modal.itemId) {
+        res = await updateSubscriptionItemAction(modal.subId, modal.itemId, 'SUSPENDED', startDate, endDate);
+      }
     } else if (modal.type === 'CANCEL_ITEM' && modal.itemId) {
       res = await updateSubscriptionItemAction(modal.subId, modal.itemId, 'REMOVED', startDate, null);
     }
@@ -61,6 +69,28 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
       setModal({ type: null, subId: null, itemId: null });
       setLoading(false);
       router.refresh(); // Refresh Sever Component automatically
+    }
+  };
+
+  const handleRemoveSuspension = async () => {
+    if (!modal.subId) return;
+    setLoading(true);
+    setError('');
+
+    let res;
+    if (modal.type === 'EDIT_PAUSE_SUB') {
+      res = await removeSubscriptionSuspensionAction(modal.subId as number);
+    } else if (modal.type === 'EDIT_PAUSE_ITEM' && modal.itemId) {
+      res = await removeSubscriptionItemSuspensionAction(modal.subId, modal.itemId);
+    }
+
+    if (res?.error) {
+      setError(res.error);
+      setLoading(false);
+    } else {
+      setModal({ type: null, subId: null, itemId: null });
+      setLoading(false);
+      router.refresh();
     }
   };
 
@@ -84,20 +114,28 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {activeSubs.map(sub => (
             <div key={sub.id} data-testid={`sub-card-${sub.id}`} className="p-6 rounded-[2rem] bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col">
-              {sub.status === 'SUSPENDED' && (
-                <div className="absolute top-0 inset-x-0 h-1 bg-amber-400"></div>
-              )}
-              {sub.status === 'ACTIVE' && (
-                <div className="absolute top-0 inset-x-0 h-1 bg-emerald-400"></div>
-              )}
-              
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-widest mb-3 ${
-                    sub.status === 'SUSPENDED' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
-                  }`}>
-                    {sub.status}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-widest ${
+                      sub.status === 'SUSPENDED' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                    }`}>
+                      {sub.status}
+                    </span>
+                    {sub.suspendStartDate && sub.status !== 'CANCELLED' && (
+                      <button 
+                        onClick={() => { 
+                          setModal({ type: 'EDIT_PAUSE_SUB', subId: sub.id }); 
+                          setStartDate(sub.suspendStartDate as string);
+                          setEndDate(sub.suspendEndDate || '');
+                        }}
+                        className="text-[10px] font-medium text-amber-600 bg-amber-50/50 hover:bg-amber-100 hover:text-amber-700 px-2 py-1 rounded-full border border-amber-100/50 hover:border-amber-200 transition-colors cursor-pointer"
+                        title="Edit Suspension"
+                      >
+                        Pause from {new Date(sub.suspendStartDate).toLocaleDateString()} to {sub.suspendEndDate ? new Date(sub.suspendEndDate).toLocaleDateString() : 'Indefinitely'}
+                      </button>
+                    )}
+                  </div>
                   <h3 className="text-xl font-medium tracking-tight text-slate-900">{sub.publicationName || "Mixed Subscription"}</h3>
                   <p className="text-xs text-slate-400 mt-1">Starting {new Date(sub.startDate).toLocaleDateString()}</p>
                 </div>
@@ -106,13 +144,6 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
                    <p className="text-sm text-slate-900 font-mono">#{sub.id}</p>
                 </div>
               </div>
-
-              {sub.status === 'SUSPENDED' && sub.suspendStartDate && (
-                <div className="mb-6 p-4 rounded-2xl bg-amber-50/50 border border-amber-100/50 text-amber-800 text-sm">
-                  <p className="font-medium">Delivery Paused</p>
-                  <p className="font-light mt-1">From {new Date(sub.suspendStartDate).toLocaleDateString()} to {sub.suspendEndDate ? new Date(sub.suspendEndDate).toLocaleDateString() : 'Indefinitely'}</p>
-                </div>
-              )}
 
               {sub.items && sub.items.length > 0 && (
                 <div className="mb-6 flex-1 flex flex-col gap-3 border-t border-slate-50 pt-6">
@@ -129,6 +160,19 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
                           }`}>
                             {item.status}
                           </span>
+                          {item.stopStartDate && item.status !== 'REMOVED' && (
+                            <button 
+                              onClick={() => {
+                                setModal({ type: 'EDIT_PAUSE_ITEM', subId: sub.id, itemId: item.id });
+                                setStartDate(item.stopStartDate as string);
+                                setEndDate(item.stopEndDate || '');
+                              }}
+                              className="text-[9px] font-medium text-amber-600 bg-amber-50 hover:bg-amber-100 hover:text-amber-700 px-2 py-0.5 rounded border border-amber-100 hover:border-amber-200 transition-colors cursor-pointer"
+                              title="Edit Pause"
+                            >
+                              Pause from {new Date(item.stopStartDate).toLocaleDateString()} to {item.stopEndDate ? new Date(item.stopEndDate).toLocaleDateString() : 'Indefinitely'}
+                            </button>
+                          )}
                         </div>
                         <p className="text-xs text-slate-500 capitalize">{item.type.toLowerCase()}</p>
                       </div>
@@ -180,18 +224,18 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/20 backdrop-blur-sm transition-opacity">
           <div className="bg-white p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden relative">
             <h3 className="text-2xl font-semibold text-slate-900 tracking-tight mb-2">
-              {modal.type.startsWith('PAUSE') ? 'Pause Deliveries' : 'Cancel Subscription'}
+              {modal.type.includes('PAUSE') ? (modal.type.startsWith('EDIT') ? 'Edit Pause' : 'Pause Deliveries') : 'Cancel Subscription'}
             </h3>
             <p className="text-slate-500 font-light text-sm mb-8 leading-relaxed">
-              {modal.type.startsWith('PAUSE') 
-                ? 'Going out of town? Select the dates you want to pause your deliveries. The earliest valid change date is 7 days from today.'
+              {modal.type.includes('PAUSE') 
+                ? 'Select the dates you want to pause your deliveries. The earliest valid change date is 2 days from today.'
                 : 'Choose when you would like your final delivery. Auto-renew will be permanently disabled after this date.'}
             </p>
 
             <div className="space-y-5 mb-8">
               <div>
                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
-                  {modal.type.startsWith('PAUSE') ? 'Pause Starts On' : 'Cancel Date'}
+                  {modal.type.includes('PAUSE') ? 'Pause Starts On' : 'Cancel Date'}
                 </label>
                 <input 
                   type="date" 
@@ -203,7 +247,7 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
                 />
               </div>
 
-              {modal.type.startsWith('PAUSE') && (
+              {modal.type.includes('PAUSE') && (
                 <div>
                   <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
                     Resume On
@@ -222,25 +266,35 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
               {error && <p data-testid="pause-modal-error" className="text-xs font-medium text-red-500 bg-red-50 p-3 rounded-xl">{error}</p>}
             </div>
 
-            <div className="flex gap-4">
-              <button 
-                onClick={() => setModal({ type: null, subId: null, itemId: null })}
-                className="flex-1 py-4 text-sm font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors">
-                Keep Active
-              </button>
-              <button 
-                onClick={handleSubmit}
-                data-testid="confirm-action-btn"
-                disabled={loading || !startDate || (modal.type.startsWith('PAUSE') && !endDate)}
-                className={`flex-1 py-4 text-sm font-medium text-white rounded-full transition-all flex items-center justify-center ${
-                  modal.type.startsWith('CANCEL') ? 'bg-red-600 hover:bg-red-700' : 'bg-slate-900 hover:bg-black'
-                } disabled:opacity-50`}>
-                {loading ? (
-                   <div data-testid="loader-spinner" className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  modal.type.startsWith('PAUSE') ? 'Confirm Pause' : 'Confirm Cancel'
-                )}
-              </button>
+            <div className="flex flex-col gap-3">
+              {(modal.type === 'EDIT_PAUSE_SUB' || modal.type === 'EDIT_PAUSE_ITEM') && (
+                <button 
+                  onClick={handleRemoveSuspension}
+                  disabled={loading}
+                  className="w-full py-3 text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-full transition-colors mb-2">
+                  Cancel Suspension
+                </button>
+              )}
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setModal({ type: null, subId: null, itemId: null })}
+                  className="flex-1 py-4 text-sm font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors">
+                  Close
+                </button>
+                <button 
+                  onClick={handleSubmit}
+                  data-testid="confirm-action-btn"
+                  disabled={loading || !startDate}
+                  className={`flex-1 py-4 text-sm font-medium text-white rounded-full transition-all flex items-center justify-center ${
+                    modal.type.includes('CANCEL') ? 'bg-red-600 hover:bg-red-700' : 'bg-slate-900 hover:bg-black'
+                  } disabled:opacity-50`}>
+                  {loading ? (
+                     <div data-testid="loader-spinner" className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  ) : (
+                    modal.type.includes('PAUSE') ? 'Save Dates' : 'Confirm Cancel'
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

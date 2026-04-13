@@ -2,7 +2,7 @@
 
 // Replaced large block with inline states and Modal UI
 import { useEffect, useState } from "react";
-import { fetchDpProfile, dpLogout, updateDpProfile } from "../actions";
+import { fetchDpProfile, dpLogout, updateDpProfile, fetchDpHistory } from "../actions";
 import DeliveryHeader from "../components/DeliveryHeader";
 import { Loader2, ArrowRight, User, MapPin, Mail, FileText, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +18,7 @@ interface DeliveryPersonProfile {
 
 export default function DeliveryProfilePage() {
   const [profile, setProfile] = useState<DeliveryPersonProfile | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
@@ -31,8 +32,12 @@ export default function DeliveryProfilePage() {
     const loadProfile = async () => {
       try {
         setLoading(true);
-        const data = await fetchDpProfile();
+        const [data, historyData] = await Promise.all([
+          fetchDpProfile(),
+          fetchDpHistory().catch(() => [])
+        ]);
         setProfile(data);
+        setHistory(historyData);
         setEditForm({ name: data.name, phone: data.phone || "" });
       } catch (err) {
         setError("Failed to load profile.");
@@ -57,6 +62,14 @@ export default function DeliveryProfilePage() {
       setIsSaving(false);
     }
   };
+
+  const currentMonthHistory = history.filter((d: any) => {
+    if (d.status !== 'DELIVERED') return false;
+    const dDate = new Date(d.deliveryDate);
+    const now = new Date();
+    return dDate.getMonth() === now.getMonth() && dDate.getFullYear() === now.getFullYear();
+  });
+  const monthEarnings = (currentMonthHistory.length * 2.5).toFixed(2);
 
   return (
     <div className="min-h-screen bg-[#FBFBFD] pb-20">
@@ -96,10 +109,10 @@ export default function DeliveryProfilePage() {
                  <div className="bg-white border border-slate-200/60 rounded-[2rem] p-8 shadow-[0_4px_24px_rgb(0,0,0,0.02)] group hover:shadow-[0_4px_32px_rgb(0,0,0,0.04)] transition-shadow">
                     <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-widest mb-6">This Month Earnings</h2>
                     <div className="flex flex-col gap-2">
-                       <span className="text-5xl font-medium tracking-tighter text-slate-900">₹0.00</span>
+                       <span className="text-5xl font-medium tracking-tighter text-slate-900">₹{monthEarnings}</span>
                        <span className="text-sm text-slate-500 flex items-center gap-2">
-                         Pending calculation
-                         <span className="inline-block w-2 h-2 rounded-full bg-amber-400"></span>
+                         Calculated from completed deliveries
+                         <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
                        </span>
                     </div>
 
@@ -107,11 +120,11 @@ export default function DeliveryProfilePage() {
                        <div className="flex gap-6">
                          <div>
                            <p className="text-xs text-slate-400 uppercase tracking-wider font-medium mb-1">Deliveries</p>
-                           <p className="text-sm font-medium text-slate-900">0 Total</p>
+                           <p className="text-sm font-medium text-slate-900">{currentMonthHistory.length} Total</p>
                          </div>
                          <div>
                            <p className="text-xs text-slate-400 uppercase tracking-wider font-medium mb-1">Commission</p>
-                           <p className="text-sm font-medium text-slate-900">Standard</p>
+                           <p className="text-sm font-medium text-slate-900">₹2.50 / unit</p>
                          </div>
                        </div>
                     </div>

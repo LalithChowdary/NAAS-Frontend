@@ -62,3 +62,61 @@ export async function createAddressAction(payload: { label: string; address: str
     return { data: null, error: 'Network error' };
   }
 }
+
+export async function updateAddressAction(addressId: string, payload: { label: string; address: string; latitude: number; longitude: number; house?: string; area?: string; landmark?: string; }) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('customer_token')?.value;
+
+  if (!token) return { data: null, error: 'Unauthorized' };
+
+  try {
+    const res = await fetch(`${API_URL}/api/customer/addresses/${addressId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      try {
+        const errorData = JSON.parse(text);
+        return { data: null, error: errorData.message || 'Failed to update address' };
+      } catch {
+        return { data: null, error: text || 'Failed to update address' };
+      }
+    }
+
+    const data = await res.json();
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error: 'Network error' };
+  }
+}
+
+export async function deleteAddressAction(addressId: string) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('customer_token')?.value;
+
+  if (!token) return { data: null, error: 'Unauthorized' };
+
+  try {
+    const res = await fetch(`${API_URL}/api/customer/addresses/${addressId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      return { success: false, error: text || 'Failed to delete address' };
+    }
+
+    return { success: true, error: null };
+  } catch (error) {
+    return { success: false, error: 'Network error' };
+  }
+}

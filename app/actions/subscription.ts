@@ -43,19 +43,22 @@ export async function createSubscriptionAction(payload: {
   }
 }
 
-export async function suspendSubscriptionAction(subId: number, suspendStartDate: string, suspendEndDate: string) {
+export async function suspendSubscriptionAction(subId: number, suspendStartDate: string, suspendEndDate: string | null) {
   const cookieStore = await cookies();
   const token = cookieStore.get('customer_token')?.value;
   if (!token) return { error: 'Unauthorized' };
 
   try {
+    const payload: any = { suspendStartDate };
+    if (suspendEndDate) payload.suspendEndDate = suspendEndDate;
+
     const res = await fetch(`${API_URL}/api/customer/subscriptions/${subId}/suspend`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ suspendStartDate, suspendEndDate })
+      body: JSON.stringify(payload)
     });
 
     if (!res.ok) {
@@ -125,6 +128,54 @@ export async function updateSubscriptionItemAction(
       const text = await res.text();
       try { return { error: JSON.parse(text).message }; }
       catch { return { error: text || 'Failed to update item' }; }
+    }
+    return { success: true };
+  } catch (err) {
+    return { error: 'Network error' };
+  }
+}
+
+export async function removeSubscriptionSuspensionAction(subId: number) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('customer_token')?.value;
+  if (!token) return { error: 'Unauthorized' };
+
+  try {
+    const res = await fetch(`${API_URL}/api/customer/subscriptions/${subId}/suspend`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      try { return { error: JSON.parse(text).message }; }
+      catch { return { error: text || 'Failed to remove suspension' }; }
+    }
+    return { success: true };
+  } catch (err) {
+    return { error: 'Network error' };
+  }
+}
+
+export async function removeSubscriptionItemSuspensionAction(subId: number | string, itemId: string) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('customer_token')?.value;
+  if (!token) return { error: 'Unauthorized' };
+
+  try {
+    const res = await fetch(`${API_URL}/api/customer/subscriptions/${subId}/items/${itemId}/suspend`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      try { return { error: JSON.parse(text).message }; }
+      catch { return { error: text || 'Failed to remove item suspension' }; }
     }
     return { success: true };
   } catch (err) {
