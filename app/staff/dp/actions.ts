@@ -104,7 +104,6 @@ export async function dpSignup(_prevState: unknown, formData: FormData) {
   const email = formData.get('email') as string;
   const phone = formData.get('phone') as string;
   const password = formData.get('password') as string;
-  const assignedArea = formData.get('assignedArea') as string;
 
   try {
     const res = await fetch(`${API_URL}/api/delivery-person/signup`, {
@@ -112,7 +111,7 @@ export async function dpSignup(_prevState: unknown, formData: FormData) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, email, phone, password, assignedArea }),
+      body: JSON.stringify({ name, email, phone, password }),
     });
 
     if (!res.ok) {

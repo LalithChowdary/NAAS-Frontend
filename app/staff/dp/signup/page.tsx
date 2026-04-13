@@ -105,17 +105,6 @@ export default function DeliverySignupPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2 ml-1">Preferred Zone (Area)</label>
-              <input
-                name="assignedArea"
-                type="text"
-                required
-                className="block w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:bg-white transition-all shadow-sm"
-                placeholder="e.g. North District"
-              />
-            </div>
-
-            <div>
               <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2 ml-1">Password</label>
               <input
                 name="password"

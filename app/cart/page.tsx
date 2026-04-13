@@ -45,13 +45,13 @@ export default function CartPage() {
       return;
     }
 
-    const newspapers = items.filter(i => i.type === 'NEWSPAPER');
-    const magazines = items.filter(i => i.type === 'MAGAZINE');
+    const customizableItems = items.filter(i => i.frequency?.toUpperCase() === 'DAILY' || i.type === 'NEWSPAPER');
+    const fixedItems = items.filter(i => !(i.frequency?.toUpperCase() === 'DAILY' || i.type === 'NEWSPAPER'));
 
     const mappedItems: { publicationId: number; frequency?: string; customDeliveryDays?: string }[] = [];
 
-    // Map newspapers with the global cart frequency settings
-    newspapers.forEach(item => {
+    // Map publications that support custom frequencies
+    customizableItems.forEach(item => {
       for (let i = 0; i < item.quantity; i++) {
         let mappedDays = undefined;
         if (subscriptionSettings.frequency === 'custom' && subscriptionSettings.customDays.length > 0) {
@@ -66,11 +66,11 @@ export default function CartPage() {
       }
     });
 
-    // Map magazines with NO frequency since they run on fixed schedules
-    magazines.forEach(item => {
+    // Map fixed frequency magazines/publications
+    fixedItems.forEach(item => {
       for (let i = 0; i < item.quantity; i++) {
         mappedItems.push({
-          publicationId: item.id
+          publicationId: item.id // send no custom frequency, backend handles inherently
         });
       }
     });
@@ -95,7 +95,7 @@ export default function CartPage() {
     }
   };
 
-  const getNewspaperMultiplier = () => {
+  const getCustomizableMultiplier = () => {
     switch (subscriptionSettings.frequency) {
       case 'daily': return 30; // approx 30 days/month
       case 'alternate': return 15; // 15 days/month
@@ -107,21 +107,31 @@ export default function CartPage() {
     }
   };
 
+  const getFixedMultiplier = (freq?: string) => {
+    switch(freq?.toUpperCase()) {
+      case 'WEEKLY': return 4;
+      case 'BI-WEEKLY': return 2;
+      case 'MONTHLY': return 1;
+      case 'YEARLY': return 0.0833;
+      default: return 1;
+    }
+  };
+
   const getItemMonthlyPrice = (item: CartItem) => {
-    const isNewspaper = item.type?.toLowerCase() !== 'magazine';
-    const multiplier = isNewspaper ? getNewspaperMultiplier() : 1; // You can adjust magazine multiplier if they have fixed frequency
+    const isCustom = item.frequency?.toUpperCase() === 'DAILY' || item.type?.toLowerCase() === 'newspaper';
+    const multiplier = isCustom ? getCustomizableMultiplier() : getFixedMultiplier(item.frequency);
     return item.price * multiplier;
   };
 
   const total = items.reduce((sum, item) => sum + (getItemMonthlyPrice(item) * item.quantity), 0);
 
-  const magazines = items.filter(item => item.type?.toLowerCase() === 'magazine');
-  const newspapers = items.filter(item => item.type?.toLowerCase() !== 'magazine');
+  const fixedItems = items.filter(item => !(item.frequency?.toUpperCase() === 'DAILY' || item.type?.toLowerCase() === 'newspaper'));
+  const customizableItems = items.filter(item => item.frequency?.toUpperCase() === 'DAILY' || item.type?.toLowerCase() === 'newspaper');
 
   const renderCartItem = (item: CartItem) => {
     const adjustedPrice = getItemMonthlyPrice(item);
-    const isNewspaper = item.type?.toLowerCase() !== 'magazine';
-    const hasDiscount = isNewspaper && adjustedPrice < item.price;
+    const isCustom = item.frequency?.toUpperCase() === 'DAILY' || item.type?.toLowerCase() === 'newspaper';
+    const hasDiscount = isCustom && adjustedPrice < item.price;
     
     return (
       <div key={item.id} className="flex flex-col gap-4 p-6 rounded-2xl border border-slate-100 bg-white shadow-sm shadow-slate-100/50 transition-all">
@@ -221,20 +231,20 @@ export default function CartPage() {
           <div className="flex-1 flex flex-col gap-10">
             
             {/* Newspapers Section */}
-            {newspapers.length > 0 && (
+            {customizableItems.length > 0 && (
               <div className="flex flex-col gap-4">
                 <div>
-                  <h3 className="text-xl font-medium text-slate-900">Newspapers</h3>
+                  <h3 className="text-xl font-medium text-slate-900">Daily Publications</h3>
                   <p className="text-sm text-slate-500 font-light mt-1">Daily delivery available. Set your preferences below.</p>
                 </div>
                 <div className="flex flex-col gap-4">
-                  {newspapers.map(renderCartItem)}
+                  {customizableItems.map(renderCartItem)}
                 </div>
 
                 {/* Global Subscription Settings (Only really applies to newspapers) */}
                 <div className="flex flex-col gap-6 p-8 rounded-2xl border border-slate-100 bg-slate-50/50 mt-2 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-1 h-full bg-slate-200"></div>
-                  <h3 className="text-sm font-medium text-slate-900 uppercase tracking-widest">Newspaper Delivery Preferences</h3>
+                  <h3 className="text-sm font-medium text-slate-900 uppercase tracking-widest">Delivery Preferences</h3>
                   
                   <div className="flex flex-col sm:flex-row gap-6 sm:items-center justify-between">
                     <div className="flex flex-col gap-2 flex-1">
@@ -299,15 +309,15 @@ export default function CartPage() {
               </div>
             )}
 
-            {/* Magazines Section */}
-            {magazines.length > 0 && (
-              <div className="flex flex-col gap-4">
+            {/* Fixed Frequency Section */}
+            {fixedItems.length > 0 && (
+              <div className="flex flex-col gap-4 mt-4">
                 <div>
-                  <h3 className="text-xl font-medium text-slate-900">Magazines</h3>
-                  <p className="text-sm text-slate-500 font-light mt-1">Delivered on the publisher's fixed schedule (e.g. Monthly / Weekly).</p>
+                  <h3 className="text-xl font-medium text-slate-900">Fixed Frequency Publications</h3>
+                  <p className="text-sm text-slate-500 font-light mt-1">Delivered on the publication's fixed assigned schedule (e.g. Monthly / Weekly).</p>
                 </div>
                 <div className="flex flex-col gap-4">
-                  {magazines.map(renderCartItem)}
+                  {fixedItems.map(renderCartItem)}
                 </div>
               </div>
             )}

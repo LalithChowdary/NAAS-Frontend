@@ -128,7 +128,6 @@ export default function DeliveryAdminPage() {
               <tr>
                 <th className="px-6 py-4 font-medium">Name</th>
                 <th className="px-6 py-4 font-medium">Contact</th>
-                <th className="px-6 py-4 font-medium">Assigned Zone</th>
                 <th className="px-6 py-4 font-medium text-center">Deliveries</th>
                 <th className="px-6 py-4 font-medium">Status</th>
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
@@ -137,7 +136,7 @@ export default function DeliveryAdminPage() {
             <tbody className="divide-y divide-[#EFEFEF]">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" strokeWidth={1.5} />
                     <span>Loading personnel...</span>
                   </td>
@@ -165,11 +164,7 @@ export default function DeliveryAdminPage() {
                         <div className="text-gray-900">{dp.phone || "—"}</div>
                         <div className="text-xs text-gray-400">{dp.user?.email}</div>
                       </td>
-                      <td className="px-6 py-3">
-                        <div className="max-w-[200px] truncate">
-                          {dp.assignedArea || "Global"}
-                        </div>
-                      </td>
+
                       <td className="px-6 py-3 text-center">
                         <span className="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-gray-50 border border-gray-100 text-xs font-medium text-gray-700">
                            {/* Using dynamic loading in the details view for exact deliveries count to enforce DB load distribution. Here we fallback to static mapping if provided or simply view on click. */}

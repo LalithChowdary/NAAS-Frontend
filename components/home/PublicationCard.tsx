@@ -8,6 +8,7 @@ interface Publication {
   type: string;
   price: number;
   description: string;
+  frequency?: string;
   enabled: boolean;
 }
 
@@ -50,7 +51,8 @@ export default function PublicationCard({ publication }: { publication: Publicat
                 id: publication.id,
                 name: publication.name,
                 price: publication.price,
-                type: publication.type
+                type: publication.type,
+                frequency: publication.frequency
               });
             }
           }}

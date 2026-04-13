@@ -97,9 +97,6 @@ export default function PendingRequestsPage() {
                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3.5 py-2.5 rounded-xl border border-gray-100">
                    <Phone className="w-4 h-4 text-gray-400 shrink-0" /> {req.phone}
                  </div>
-                 <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3.5 py-2.5 rounded-xl border border-gray-100">
-                   <MapPin className="w-4 h-4 text-gray-400 shrink-0" /> <span className="truncate">{req.assignedArea || 'Global Fleet'}</span>
-                 </div>
                </div>
 
                <div className="flex gap-3">

@@ -10,6 +10,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   type: string;
+  frequency?: string;
 }
 
 export interface SubscriptionSettings {

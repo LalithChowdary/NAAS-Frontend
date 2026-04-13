@@ -13,7 +13,6 @@ interface DeliveryPersonProfile {
   email: string;
   phone: string;
   employeeId: string;
-  assignedArea: string;
   payoutDetails: string;
 }
 
@@ -160,17 +159,6 @@ export default function DeliveryProfilePage() {
                           <p className="text-xs text-slate-500 mt-1">{profile.phone || "No phone added"}</p>
                         </div>
                       </div>
-
-                      <div className="flex items-start gap-4">
-                        <div className="mt-1 w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center shrink-0 border border-emerald-100 relative z-10">
-                          <MapPin className="h-4 w-4 text-emerald-600" strokeWidth={1.5} />
-                        </div>
-                        <div className="relative z-10">
-                          <p className="text-xs text-slate-500 mb-0.5">Assigned Zone</p>
-                          <p className="text-sm font-medium text-slate-900">{profile.assignedArea || "Global Fleet"}</p>
-                          <p className="text-xs text-slate-400 mt-1 italic">Role mapping uneditable via dashboard</p>
-                        </div>
-                      </div>
                     </div>
                  </div>
 
@@ -266,11 +254,11 @@ export default function DeliveryProfilePage() {
                  </div>
                  
                  <div>
-                   <label className="block text-xs font-medium text-slate-500 mb-1.5 ml-1">Employee ID & Assignment bounds</label>
+                   <label className="block text-xs font-medium text-slate-500 mb-1.5 ml-1">Employee ID</label>
                    <input
                      title="Core identifiers cannot be modified via user platform."
                      type="text"
-                     value={`ID: ${profile.employeeId || 'System'} | Zone: ${profile.assignedArea || 'Global'}`}
+                     value={`ID: ${profile.employeeId || 'System'}`}
                      disabled
                      className="w-full px-4 py-3 bg-slate-50/50 border border-slate-100 rounded-xl text-sm text-slate-400 cursor-not-allowed"
                    />
