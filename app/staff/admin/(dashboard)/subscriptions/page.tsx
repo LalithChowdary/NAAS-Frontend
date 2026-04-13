@@ -57,7 +57,7 @@ export default function SubscriptionsPage() {
   const handleAction = async (subId: number, action: 'pause' | 'resume' | 'cancel') => {
     try {
       setActionLoading(subId);
-      await updateSubscriptionStatus(subId, action);
+      await updateSubscriptionStatus(String(subId), action);
       await loadData(); // refresh status
     } catch (err) {
       alert(`Failed to ${action} subscription. The backend might restrict this to Customer identities.`);

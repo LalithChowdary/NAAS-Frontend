@@ -208,6 +208,21 @@ export async function fetchDpDeliveriesByDate(dateStr: string) {
   return res.json();
 }
 
+export async function fetchDpPayouts() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('dp_token')?.value;
+  if (!token) throw new Error('Session expired.');
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+  const res = await fetch(`${API_URL}/api/delivery-person/me/payouts`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+    cache: 'no-store'
+  });
+
+  if (!res.ok) throw new Error(`Failed to load payouts (${res.status})`);
+  return res.json();
+}
+
 export async function fetchDpHistory() {
   const cookieStore = await cookies();
   const token = cookieStore.get('dp_token')?.value;

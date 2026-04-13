@@ -39,6 +39,35 @@ export async function fetchDeliverySummary(startDate: string, endDate: string) {
   return authFetch(`/api/reports/delivery-summary?startDate=${startDate}&endDate=${endDate}`);
 }
 
+async function authPost(endpoint: string, bodyObj: any) {
+  const cookieStore = await cookies();
+  const adminToken = cookieStore.get('admin_token')?.value;
+
+  if (!adminToken) {
+    throw new Error('Not authorized. Please log in.');
+  }
+
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${adminToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(bodyObj),
+    cache: 'no-store'
+  });
+
+  if (!res.ok) {
+    throw new Error(`API returned ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function processPersonnelPayout(id: string, startDate: string, endDate: string, amountPaid: number) {
+  return authPost(`/api/delivery-person/${id}/payout`, { startDate, endDate, amountPaid });
+}
+
 export async function fetchDeliveryPersonnelPayment(startDate: string, endDate: string) {
   return authFetch(`/api/reports/delivery-personnel-payment?startDate=${startDate}&endDate=${endDate}`);
 }

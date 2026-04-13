@@ -88,8 +88,8 @@ export default function PaymentsPage() {
 
   // Derived state for the modal's dependent dropdowns
   const uniqueCustomers = useMemo(() => {
-    const map = new Map<number, string>();
-    unpaidBills.forEach((b) => map.set(b.customerId, b.customerName));
+    const map = new Map<string, string>();
+    unpaidBills.forEach((b) => map.set(String(b.customerId), b.customerName));
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [unpaidBills]);
 

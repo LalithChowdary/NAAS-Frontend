@@ -69,7 +69,7 @@ export default function DeliveryProfilePage() {
     const now = new Date();
     return dDate.getMonth() === now.getMonth() && dDate.getFullYear() === now.getFullYear();
   });
-  const monthEarnings = (currentMonthHistory.length * 2.5).toFixed(2);
+  const monthEarnings = currentMonthHistory.reduce((sum: number, d: any) => sum + (d.payout || 0), 0).toFixed(2);
 
   return (
     <div className="min-h-screen bg-[#FBFBFD] pb-20">
@@ -124,7 +124,7 @@ export default function DeliveryProfilePage() {
                          </div>
                          <div>
                            <p className="text-xs text-slate-400 uppercase tracking-wider font-medium mb-1">Commission</p>
-                           <p className="text-sm font-medium text-slate-900">₹2.50 / unit</p>
+                           <p className="text-sm font-medium text-slate-900">2.5% of value</p>
                          </div>
                        </div>
                     </div>
@@ -189,11 +189,36 @@ export default function DeliveryProfilePage() {
                       </Link>
                     </div>
                     
-                    <div className="flex-1 flex flex-col items-center justify-center text-center py-10 relative z-10">
-                       <FileText className="h-8 w-8 text-slate-300 mb-4" strokeWidth={1} />
-                       <p className="text-sm font-medium text-slate-900">No recent deliveries</p>
-                       <p className="text-xs text-slate-500 mt-1 max-w-[200px]">Historical delivery records will appear here as you complete your daily routes.</p>
-                    </div>
+                    {history.length > 0 ? (
+                      <div className="flex-1 overflow-y-auto pr-2 space-y-4 relative z-10 custom-scrollbar max-h-[250px]">
+                        {history.slice(0, 5).map((delivery: any, idx: number) => (
+                          <div key={idx} className="flex items-center justify-between pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+                            <div>
+                              <p className="text-sm font-medium text-slate-800">{delivery.customerName || "Customer"}</p>
+                              <p className="text-xs text-slate-500 truncate max-w-[150px] sm:max-w-[200px]">{delivery.customerAddress}</p>
+                              <p className="text-[10px] text-slate-400 mt-0.5">{new Date(delivery.deliveryDate).toLocaleDateString()} • {delivery.publications}</p>
+                            </div>
+                            <div className="flex flex-col items-end">
+                              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${
+                                delivery.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-600' : 
+                                delivery.status === 'CANCELLED' ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
+                              }`}>
+                                {delivery.status}
+                              </span>
+                              <span className="text-slate-600 font-semibold text-xs mt-1">
+                                +₹{delivery.payout?.toFixed(2) || '0.00'}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex-1 flex flex-col items-center justify-center text-center py-10 relative z-10">
+                         <FileText className="h-8 w-8 text-slate-300 mb-4" strokeWidth={1} />
+                         <p className="text-sm font-medium text-slate-900">No recent deliveries</p>
+                         <p className="text-xs text-slate-500 mt-1 max-w-[200px]">Historical delivery records will appear here as you complete your daily routes.</p>
+                      </div>
+                    )}
 
                     {/* Faint background decoration */}
                     <div className="absolute -bottom-8 -right-8 w-40 h-40 bg-slate-50 rounded-full blur-3xl opacity-50 pointer-events-none z-0"></div>

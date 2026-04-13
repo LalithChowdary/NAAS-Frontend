@@ -13,7 +13,8 @@ import {
   LayoutDashboard,
   Truck,
   Calendar,
-  MapPin
+  MapPin,
+  Wallet
 } from "lucide-react";
 import { adminLogout } from "../actions";
 
@@ -35,6 +36,7 @@ export default function AdminLayout({
     { name: "Subscriptions", href: "/staff/admin/subscriptions", icon: RefreshCcw },
     { name: "Billing", href: "/staff/admin/billing", icon: Banknote },
     { name: "Payments", href: "/staff/admin/payments", icon: CreditCard },
+    { name: "Payouts", href: "/staff/admin/payouts", icon: Wallet },
     { name: "Reports", href: "/staff/admin/reports", icon: BarChart3 },
   ];
 

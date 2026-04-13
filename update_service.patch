@@ -1,0 +1,60 @@
+--- ../backend/src/main/java/com/naas/backend/deliveryperson/service/DeliveryPersonService.java
++++ ../backend/src/main/java/com/naas/backend/deliveryperson/service/DeliveryPersonService.java
+@@ -5,6 +5,10 @@
+ import com.naas.backend.delivery.repository.DeliveryRecordRepository;
+ import com.naas.backend.deliveryperson.DeliveryPerson;
+ import com.naas.backend.deliveryperson.DeliveryPersonRepository;
++import com.naas.backend.deliveryperson.DeliveryPersonPayout;
++import com.naas.backend.deliveryperson.DeliveryPersonPayoutRepository;
++import com.naas.backend.deliveryperson.dto.PayoutRequest;
++import com.naas.backend.deliveryperson.dto.PayoutResponse;
+ import com.naas.backend.publication.PublicationRepository;
+ import com.naas.backend.publication.Publication;
+ import lombok.RequiredArgsConstructor;
+@@ -12,6 +16,7 @@
+ import org.springframework.stereotype.Service;
+ 
+ import java.time.LocalDate;
++import java.time.LocalDateTime;
+ import java.util.List;
+ 
+ @Service
+@@ -23,6 +28,7 @@
+     private final DeliveryRecordRepository deliveryRecordRepository;
+     private final PublicationRepository publicationRepository;
+     private final com.naas.backend.subscription.SubscriptionRepository subscriptionRepository;
++    private final DeliveryPersonPayoutRepository deliveryPersonPayoutRepository;
+ 
+     public DeliveryPerson createDeliveryPerson(String name, String email, String password, String phone,
+             String employeeId) {
+@@ -194,4 +200,26 @@
+ 
+         return (totalValue * 2.5) / 100.0;
+     }
++
++    public PayoutResponse processPayout(UUID deliveryPersonId, PayoutRequest request) {
++        DeliveryPerson deliveryPerson = deliveryPersonRepository.findById(deliveryPersonId)
++                .orElseThrow(() -> new RuntimeException("DeliveryPerson not found"));
++
++        DeliveryPersonPayout payout = DeliveryPersonPayout.builder()
++                .deliveryPerson(deliveryPerson)
++                .startDate(request.getStartDate())
++                .endDate(request.getEndDate())
++                .amountPaid(request.getAmountPaid())
++                .paymentDate(LocalDateTime.now())
++                .status(DeliveryPersonPayout.PayoutStatus.COMPLETED)
++                .build();
++
++        payout = deliveryPersonPayoutRepository.save(payout);
++
++        PayoutResponse response = new PayoutResponse();
++        response.setId(payout.getId());
++        response.setDeliveryPersonId(deliveryPerson.getId());
++        response.setStartDate(payout.getStartDate());
++        response.setEndDate(payout.getEndDate());
++        response.setAmountPaid(payout.getAmountPaid());
++        response.setPaymentDate(payout.getPaymentDate());
++        response.setStatus(payout.getStatus());
++        return response;
++    }
+ }
