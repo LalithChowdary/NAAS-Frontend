@@ -25,7 +25,7 @@ export default function PublicationCard({ publication }: { publication: Publicat
         <div className="flex flex-col items-end">
           <span className="text-lg font-semibold text-slate-900">₹{publication.price.toFixed(2)}
           </span>
-          <span className="text-xs text-slate-400">/ {publication.type === 'NEWSPAPER' ? 'paper' : 'magazine'}</span>
+          <span className="text-xs text-slate-400 font-medium">{publication.frequency ? publication.frequency.toUpperCase() : (publication.type === 'NEWSPAPER' ? 'DAILY' : 'MONTHLY')}</span>
         </div>
       </div>
 

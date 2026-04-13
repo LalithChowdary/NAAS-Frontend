@@ -6,7 +6,7 @@ import { ArrowLeft, MapPin, Phone, Mail, Calendar, Package, ChevronRight, Loader
 import { fetchDeliveryPersonDetails, fetchDeliveryPersonHistory } from "../../../actions";
 
 interface DeliveryPerson {
-  id: number;
+  id: string;
   name: string;
   phone: string;
   employeeId: string;
@@ -17,8 +17,8 @@ interface DeliveryPerson {
 }
 
 interface DeliveryRecord {
-  id: number;
-  customerId: number;
+  id: string;
+  customerId: string;
   deliveryDate: string;
   status: string;
   notes?: string;
@@ -27,7 +27,7 @@ interface DeliveryRecord {
 export default function DeliveryPersonDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const dpId = Number(params.id);
+  const dpId = params.id as string;
   
   const [person, setPerson] = useState<DeliveryPerson | null>(null);
   const [deliveries, setDeliveries] = useState<DeliveryRecord[]>([]);

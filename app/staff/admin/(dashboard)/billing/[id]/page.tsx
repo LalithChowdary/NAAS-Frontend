@@ -6,7 +6,7 @@ import { ArrowLeft, ChevronRight, Loader2, CreditCard, Calendar, Clock, Download
 import { fetchAdminBillById, markAdminBillStatus } from "../../../actions";
 
 interface BillItem {
-  id: number;
+  id: string;
   publicationName: string;
   deliveriesCount: number;
   pricePerUnit: number;
@@ -14,8 +14,8 @@ interface BillItem {
 }
 
 interface Bill {
-  id: number;
-  customerId: number;
+  id: string;
+  customerId: string;
   customerName: string;
   billingMonth: string;
   totalAmount: number;
@@ -28,7 +28,7 @@ interface Bill {
 export default function BillDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const billId = Number(params.id);
+  const billId = params.id as string;
   
   const [bill, setBill] = useState<Bill | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,7 @@ export default function BillDetailPage() {
   };
 
   useEffect(() => {
-    if (billId && !isNaN(billId)) {
+    if (billId) {
       loadData();
     } else {
       setError("Invalid Bill ID");

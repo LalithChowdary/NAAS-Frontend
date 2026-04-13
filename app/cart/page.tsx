@@ -22,6 +22,36 @@ export default function CartPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [showAddressModal, setShowAddressModal] = useState(false);
 
+  const [cartCalculation, setCartCalculation] = useState<{items: any[], totalMonthlyCost: number} | null>(null);
+
+  useEffect(() => {
+    async function calculateCart() {
+      if (items.length === 0) {
+        setCartCalculation({ items: [], totalMonthlyCost: 0 });
+        return;
+      }
+      
+      const payload = {
+        items: items.map(i => ({ publicationId: i.id, quantity: i.quantity }))
+      };
+      
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/publications/calculate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setCartCalculation(data);
+        }
+      } catch (err) {
+        console.error("Failed to calculate cart:", err);
+      }
+    }
+    calculateCart();
+  }, [items]);
+
   useEffect(() => {
     async function loadAddresses() {
       const res = await getAddressesAction();
@@ -123,15 +153,15 @@ export default function CartPage() {
     return item.price * multiplier;
   };
 
-  const total = items.reduce((sum, item) => sum + (getItemMonthlyPrice(item) * item.quantity), 0);
+  const total = cartCalculation ? cartCalculation.totalMonthlyCost : items.reduce((sum, item) => sum + (item.price * getFixedMultiplier(item.frequency) * item.quantity), 0);
 
   const fixedItems = items.filter(item => !(item.frequency?.toUpperCase() === 'DAILY' || item.type?.toLowerCase() === 'newspaper'));
   const customizableItems = items.filter(item => item.frequency?.toUpperCase() === 'DAILY' || item.type?.toLowerCase() === 'newspaper');
 
   const renderCartItem = (item: CartItem) => {
-    const adjustedPrice = getItemMonthlyPrice(item);
-    const isCustom = item.frequency?.toUpperCase() === 'DAILY' || item.type?.toLowerCase() === 'newspaper';
-    const hasDiscount = isCustom && adjustedPrice < item.price;
+    const calcItem = cartCalculation?.items?.find(i => i.publicationId === item.id);
+    const adjustedPrice = calcItem ? (calcItem.monthlyCost / item.quantity) : (item.price * getFixedMultiplier(item.frequency));
+    const hasDiscount = false;
     
     return (
       <div key={item.id} className="flex flex-col gap-4 p-6 rounded-2xl border border-slate-100 bg-white shadow-sm shadow-slate-100/50 transition-all">
@@ -142,12 +172,15 @@ export default function CartPage() {
               <span className="px-2.5 py-0.5 rounded-full bg-slate-50 text-[10px] uppercase font-semibold text-slate-500 tracking-wider">
                 {item.type}
               </span>
+              <span className="text-xs font-semibold text-slate-400 capitalize">
+                {calcItem?.frequency?.toLowerCase() || item.frequency?.toLowerCase() || 'monthly'}
+              </span>
             </div>
             <div className="flex items-center gap-2">
-              <p className="text-sm text-slate-900 font-medium">₹{adjustedPrice.toFixed(2)} <span className="text-slate-500 font-light">/ {item.type === 'NEWSPAPER' ? 'paper' : 'magazine'}</span></p>
-              {hasDiscount && (
-                <p className="text-xs text-slate-400 line-through">₹{item.price.toFixed(2)}</p>
-              )}
+              <p className="text-sm text-slate-900 font-medium">₹{item.price.toFixed(2)} <span className="text-slate-500 font-light">/ issue</span></p>
+            </div>
+            <div className="text-xs text-slate-500 mt-1">
+              Monthly Cost: <span className="font-medium text-slate-900">₹{adjustedPrice.toFixed(2)}</span>
             </div>
           </div>
           

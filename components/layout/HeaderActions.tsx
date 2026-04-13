@@ -44,6 +44,7 @@ export default function HeaderActions({ isAuthenticated }: { isAuthenticated: bo
         <form action={logout}>
           <button 
             type="submit"
+            data-testid="logout-btn"
             className="text-xs font-medium text-slate-400 hover:text-black transition-colors"
           >
             Sign Out

@@ -15,10 +15,10 @@ import { fetchAllPaymentsAndUnpaidBills, recordPayment } from "../../actions";
 
 // Types derived from actual DTO structure
 interface Payment {
-  id: number;
-  billId: number;
+  id: string;
+  billId: string;
   billingMonth: string;
-  customerId: number;
+  customerId: string;
   customerName: string;
   amount: number;
   paymentMethod: "CASH" | "CHEQUE";
@@ -28,8 +28,8 @@ interface Payment {
 }
 
 interface UnpaidBill {
-  id: number;
-  customerId: number;
+  id: string;
+  customerId: string;
   customerName: string;
   billingMonth: string;
   totalAmount: number;
@@ -55,8 +55,8 @@ export default function PaymentsPage() {
   const [submitError, setSubmitError] = useState("");
   
   // Modal Form State
-  const [selectedCustomerId, setSelectedCustomerId] = useState<number | "">("");
-  const [selectedBillId, setSelectedBillId] = useState<number | "">("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | "">("");
+  const [selectedBillId, setSelectedBillId] = useState<string | "">("");
   const [paymentAmount, setPaymentAmount] = useState<string>("");
   const [paymentMode, setPaymentMode] = useState<"CASH" | "CHEQUE">("CASH");
   const [chequeNumber, setChequeNumber] = useState<string>("");
@@ -121,7 +121,7 @@ export default function PaymentsPage() {
       const receiptNote = `Recorded on ${paymentDate}`;
 
       const res = await recordPayment(
-        Number(selectedBillId),
+        selectedBillId as string,
         parseFloat(paymentAmount),
         paymentMode,
         paymentMode === "CHEQUE" ? chequeNumber : "",
@@ -375,7 +375,7 @@ export default function PaymentsPage() {
                     required
                     value={selectedCustomerId}
                     onChange={(e) => {
-                      setSelectedCustomerId(e.target.value ? Number(e.target.value) : "");
+                      setSelectedCustomerId(e.target.value);
                       setSelectedBillId(""); // Reset bill on customer change
                     }}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:bg-white transition-all appearance-none"
@@ -401,7 +401,7 @@ export default function PaymentsPage() {
                     <select
                       required
                       value={selectedBillId}
-                      onChange={(e) => setSelectedBillId(e.target.value ? Number(e.target.value) : "")}
+                      onChange={(e) => setSelectedBillId(e.target.value)}
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:bg-white transition-all appearance-none"
                     >
                       <option value="">Select bill to pay...</option>

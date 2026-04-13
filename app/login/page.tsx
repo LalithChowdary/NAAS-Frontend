@@ -12,6 +12,7 @@ function SubmitButton() {
     <button 
       type="submit" 
       disabled={pending}
+      data-testid="login-submit"
       className={`w-full py-3.5 px-4 bg-slate-900 text-white rounded-full text-sm font-medium tracking-wide transition-all ${
         pending ? 'opacity-70 cursor-not-allowed' : 'hover:bg-black active:scale-[0.98]'
       }`}
@@ -37,7 +38,7 @@ export default function LoginPage() {
         <form action={formAction} className="flex flex-col gap-5">
           
           {state?.error && (
-            <div className="p-3 bg-red-50 text-red-600 text-sm font-medium rounded-xl text-center">
+            <div data-testid="login-error-msg" className="p-3 bg-red-50 text-red-600 text-sm font-medium rounded-xl text-center">
               {state.error}
             </div>
           )}
@@ -50,6 +51,7 @@ export default function LoginPage() {
               type="email" 
               autoComplete="email"
               required
+              data-testid="login-email"
               className="w-full px-4 py-3 bg-slate-50 border border-slate-100/50 rounded-2xl outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-100 transition-all text-sm text-slate-900"
               placeholder="name@example.com"
             />
@@ -65,6 +67,7 @@ export default function LoginPage() {
               type="password" 
               autoComplete="current-password"
               required
+              data-testid="login-password"
               className="w-full px-4 py-3 bg-slate-50 border border-slate-100/50 rounded-2xl outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-100 transition-all text-sm text-slate-900"
               placeholder="••••••••"
             />

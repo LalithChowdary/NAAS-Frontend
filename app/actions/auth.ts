@@ -49,7 +49,7 @@ export async function login(_prevState: unknown, formData: FormData) {
   }
 
   // Redirect must be called outside the try-catch block
-  redirect('/');
+  redirect('/customer');
 }
 
 export async function signup(_prevState: unknown, formData: FormData) {

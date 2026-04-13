@@ -119,7 +119,7 @@ export async function toggleDeliveryPersonStatus(id: number, active: boolean) {
   return res.json();
 }
 
-export async function fetchDeliveryPersonDetails(id: number) {
+export async function fetchDeliveryPersonDetails(id: string) {
   const res = await fetch(`${API_URL}/api/delivery-person/${id}`, {
     headers: await getAdminAuthHeader(),
     cache: 'no-store'
@@ -128,7 +128,7 @@ export async function fetchDeliveryPersonDetails(id: number) {
   return res.json();
 }
 
-export async function fetchDeliveryPersonHistory(id: number) {
+export async function fetchDeliveryPersonHistory(id: string) {
   const res = await fetch(`${API_URL}/api/delivery-person/${id}/deliveries`, {
     headers: await getAdminAuthHeader(),
     cache: 'no-store'
@@ -203,7 +203,7 @@ export async function fetchAdminBills() {
   }
 }
 
-export async function fetchAdminBillById(id: number) {
+export async function fetchAdminBillById(id: string) {
   try {
     const res = await fetch(`${API_URL}/api/admin/bills/${id}`, {
       headers: await getAdminAuthHeader(),
@@ -265,7 +265,7 @@ export async function generateAdminBills(year?: number, month?: number) {
 
 
 
-export async function markAdminBillStatus(id: number, status: string) {
+export async function markAdminBillStatus(id: string, status: string) {
   try {
     const res = await fetch(`${API_URL}/api/admin/bills/${id}/status`, {
       method: "PATCH",
@@ -286,7 +286,7 @@ export async function markAdminBillStatus(id: number, status: string) {
   }
 }
 
-export async function fetchPaymentsForBill(billId: number) {
+export async function fetchPaymentsForBill(billId: string) {
   try {
     const res = await fetch(`${API_URL}/api/admin/bills/${billId}/payments`, {
       headers: await getAdminAuthHeader(),
@@ -313,7 +313,7 @@ export async function fetchAllPaymentsAndUnpaidBills() {
       return { ok: false, data: { payments: [], unpaidBills: [] }, message: billsRes.message };
     }
 
-    type BillSummary = { id: number; status?: string; customerId: number; customerName: string; billingMonth: string; totalAmount: number; };
+    type BillSummary = { id: string; status?: string; customerId: string; customerName: string; billingMonth: string; totalAmount: number; };
     const allBills = (Array.isArray(billsRes.data) ? billsRes.data : []) as BillSummary[];
 
     // Group unpaid bills for dropdowns
@@ -345,7 +345,7 @@ export async function fetchAllPaymentsAndUnpaidBills() {
   }
 }
 
-export async function recordPayment(billId: number, amount: number, paymentMethod: string, chequeNumber: string, receiptNote: string) {
+export async function recordPayment(billId: string, amount: number, paymentMethod: string, chequeNumber: string, receiptNote: string) {
   try {
     const res = await fetch(`${API_URL}/api/admin/bills/${billId}/payments`, {
       method: 'POST',

@@ -76,7 +76,7 @@ export async function fetchCustomerSubscriptions(customerId: string) {
   return res.json();
 }
 
-export async function updateSubscriptionStatus(subscriptionId: number, command: 'pause' | 'resume' | 'cancel') {
+export async function updateSubscriptionStatus(subscriptionId: string, command: 'pause' | 'resume' | 'cancel') {
   // Mapping to conventional backend endpoints. Assuming /api/subscriptions/{id}/{command} if available
   // The backend API for this wasn't strictly exposed in AdminSubscriptionController, it's typically in Customer or Subscription controller.
   // We'll call the standard subscription endpoints here.

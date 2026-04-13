@@ -68,7 +68,7 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
   const pastSubs = subscriptions.filter(s => s.status === 'CANCELLED');
 
   return (
-    <div className="mt-16">
+    <div data-testid="customer-dashboard" className="mt-16">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Your Subscriptions</h2>
       </div>
@@ -83,7 +83,7 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {activeSubs.map(sub => (
-            <div key={sub.id} className="p-6 rounded-[2rem] bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col">
+            <div key={sub.id} data-testid={`sub-card-${sub.id}`} className="p-6 rounded-[2rem] bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col">
               {sub.status === 'SUSPENDED' && (
                 <div className="absolute top-0 inset-x-0 h-1 bg-amber-400"></div>
               )}
@@ -157,12 +157,14 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
 
               <div className="mt-auto pt-6 border-t border-slate-50 flex items-center justify-between gap-4">
                 <button 
+                  data-testid="pause-sub-btn"
                   onClick={() => { setModal({ type: 'PAUSE_SUB', subId: sub.id }); setStartDate(minDateStr); setEndDate(''); }}
                   disabled={sub.status === 'SUSPENDED'}
                   className="flex-1 py-3 text-sm font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-slate-900 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   Pause Delivery
                 </button>
                 <button 
+                  data-testid="cancel-sub-btn"
                   onClick={() => { setModal({ type: 'CANCEL_SUB', subId: sub.id }); setStartDate(minDateStr); }}
                   className="flex-1 py-3 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors">
                   Cancel Auto-Renew
@@ -193,6 +195,7 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
                 </label>
                 <input 
                   type="date" 
+                  data-testid="pause-start-date"
                   value={startDate}
                   min={minDateStr}
                   onChange={e => setStartDate(e.target.value)}
@@ -207,6 +210,7 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
                   </label>
                   <input 
                     type="date" 
+                    data-testid="pause-end-date"
                     value={endDate}
                     min={startDate || minDateStr}
                     onChange={e => setEndDate(e.target.value)}
@@ -215,7 +219,7 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
                 </div>
               )}
 
-              {error && <p className="text-xs font-medium text-red-500 bg-red-50 p-3 rounded-xl">{error}</p>}
+              {error && <p data-testid="pause-modal-error" className="text-xs font-medium text-red-500 bg-red-50 p-3 rounded-xl">{error}</p>}
             </div>
 
             <div className="flex gap-4">
@@ -226,12 +230,13 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
               </button>
               <button 
                 onClick={handleSubmit}
+                data-testid="confirm-action-btn"
                 disabled={loading || !startDate || (modal.type.startsWith('PAUSE') && !endDate)}
                 className={`flex-1 py-4 text-sm font-medium text-white rounded-full transition-all flex items-center justify-center ${
                   modal.type.startsWith('CANCEL') ? 'bg-red-600 hover:bg-red-700' : 'bg-slate-900 hover:bg-black'
                 } disabled:opacity-50`}>
                 {loading ? (
-                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                   <div data-testid="loader-spinner" className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
                   modal.type.startsWith('PAUSE') ? 'Confirm Pause' : 'Confirm Cancel'
                 )}

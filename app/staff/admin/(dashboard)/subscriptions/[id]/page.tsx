@@ -6,7 +6,7 @@ import { ArrowLeft, ChevronRight, Loader2, Play, Pause, Ban, Calendar, CreditCar
 import { fetchSubscriptionById, updateSubscriptionStatus } from "../../customers/actions";
 
 interface SubscriptionItem {
-  id: number;
+  id: string;
   publicationName: string;
   type: string;
   price: number;
@@ -14,8 +14,8 @@ interface SubscriptionItem {
 }
 
 interface Subscription {
-  id: number;
-  customerId: number;
+  id: string;
+  customerId: string;
   customerName?: string;
   status: string;
   startDate: string;
@@ -52,7 +52,7 @@ export default function SubscriptionDetailPage() {
   const handleAction = async (action: 'pause' | 'resume' | 'cancel') => {
     try {
       setActionLoading(true);
-      await updateSubscriptionStatus(Number(subscriptionId), action);
+      await updateSubscriptionStatus(subscriptionId, action);
       await loadData();
     } catch (err) {
       alert(`Failed to ${action} subscription. Validations usually bind strict user scopes.`);

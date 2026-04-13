@@ -18,8 +18,8 @@ type BillFilterStatus = "ALL" | "PAID" | "PENDING" | "OVERDUE";
 type UiBillStatus = "PAID" | "PENDING" | "OVERDUE";
 
 interface Bill {
-  id: number;
-  customerId: number;
+  id: string;
+  customerId: string;
   customerName: string;
   billingMonth: string;
   totalAmount: number;
