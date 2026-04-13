@@ -70,7 +70,7 @@ export default function CustomerDetailPage() {
   const handleAction = async (subId: number, action: 'pause' | 'resume' | 'cancel') => {
     try {
       setActionLoading(subId);
-      await updateSubscriptionStatus(subId, action);
+      await updateSubscriptionStatus(subId.toString(), action);
       await loadData();
     } catch (err) {
       alert(`Failed to ${action} subscription. Feature might require Customer token bindings currently.`);

@@ -26,6 +26,7 @@ export default function AdminLayout({
 
   const navigation = [
     { name: "Dashboard", href: "/staff/admin", icon: LayoutDashboard },
+    { name: "Admins", href: "/staff/admin/admins", icon: Users },
     { name: "Customers", href: "/staff/admin/customers", icon: Users },
     { name: "Delivery Personnel", href: "/staff/admin/delivery", icon: Truck },
     { name: "Delivery Schedule", href: "/staff/admin/delivery/schedule", icon: Calendar },
