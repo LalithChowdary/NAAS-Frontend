@@ -7,8 +7,7 @@ import { fetchCustomerById, fetchCustomerSubscriptions, updateSubscriptionStatus
 
 interface Customer {
   id: number;
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   phone: string;
   active: boolean;
@@ -114,7 +113,7 @@ export default function CustomerDetailPage() {
             <span className="text-gray-900">Profile</span>
           </div>
           <h1 className="text-2xl font-medium tracking-tight text-gray-900 flex items-center gap-3">
-            {customer.firstName} {customer.lastName}
+            {customer.name || customer.email.split('@')[0]}
             <span className={`inline-flex px-2 py-0.5 text-[10px] uppercase font-bold rounded-full border ${
               customer.active 
                 ? "bg-emerald-50 text-emerald-600 border-emerald-100" 

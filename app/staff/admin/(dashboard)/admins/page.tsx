@@ -168,11 +168,10 @@ export default function AdminsPage() {
                   <tr key={admin.id} className="hover:bg-[#FBFBFD] transition-colors group cursor-pointer">
                     <td className="px-6 py-3">
                       <div className="font-medium text-gray-900">{admin.name}</div>
-                      <div className="text-xs text-gray-500 font-mono mt-0.5">{admin.id}</div>
                     </td>
                     <td className="px-6 py-3">
-                      <div className="text-gray-900">{admin.email}</div>
-                      <div className="text-xs text-gray-400">{admin.phone || "—"}</div>
+                      <div className="text-gray-900">{admin.phone || "—"}</div>
+                      <div className="text-xs text-gray-400">{admin.email}</div>
                     </td>
                     <td className="px-6 py-3">
                       <div className="text-gray-900">{admin.employeeId || "—"}</div>

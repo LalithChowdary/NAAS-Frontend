@@ -158,7 +158,6 @@ export default function DeliveryAdminPage() {
                     <tr key={dp.id} className="hover:bg-[#FBFBFD] transition-colors group cursor-pointer" onClick={() => router.push(`/staff/admin/delivery/${dp.id}`)}>
                       <td className="px-6 py-3">
                         <div className="font-medium text-gray-900">{dp.name}</div>
-                        <div className="text-xs text-gray-400">ID: {dp.employeeId || `DP-${dp.id}`}</div>
                       </td>
                       <td className="px-6 py-3">
                         <div className="text-gray-900">{dp.phone || "—"}</div>

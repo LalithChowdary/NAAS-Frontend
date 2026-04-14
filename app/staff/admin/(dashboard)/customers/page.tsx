@@ -8,8 +8,7 @@ import { useRouter } from "next/navigation";
 
 interface Customer {
   id: number;
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   phone: string;
   active: boolean;
@@ -112,7 +111,7 @@ export default function CustomersPage() {
             <thead className="bg-[#FBFBFD] border-b border-[#EFEFEF] text-gray-400 font-medium">
               <tr>
                 <th className="px-6 py-4 font-medium">Name</th>
-                <th className="px-6 py-4 font-medium">Phone</th>
+                <th className="px-6 py-4 font-medium">Contact</th>
                 <th className="px-6 py-4 font-medium">Subscriptions</th>
                 <th className="px-6 py-4 font-medium">Status</th>
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
@@ -139,11 +138,11 @@ export default function CustomersPage() {
                 filteredCustomers.map((customer) => (
                   <tr key={customer.id} className="hover:bg-[#FBFBFD] transition-colors group cursor-pointer" onClick={() => router.push(`/staff/admin/customers/${customer.id}`)}>
                     <td className="px-6 py-3">
-                      <div className="font-medium text-gray-900">{customer.firstName} {customer.lastName}</div>
-                      <div className="text-xs text-gray-400">{customer.email}</div>
+                      <div className="font-medium text-gray-900">{customer.name || customer.email.split('@')[0]}</div>
                     </td>
                     <td className="px-6 py-3">
-                      {customer.phone || "—"}
+                      <div className="text-gray-900">{customer.phone || "—"}</div>
+                      <div className="text-xs text-gray-400">{customer.email}</div>
                     </td>
                     <td className="px-6 py-3">
                       <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50 border border-gray-100 text-xs font-medium text-gray-700">

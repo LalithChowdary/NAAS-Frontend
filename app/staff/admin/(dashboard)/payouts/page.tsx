@@ -11,6 +11,8 @@ interface PayoutRecord {
   deliveriesCompleted: number;
   totalDeliveryValue: number;
   paymentAmount: number;
+  alreadyPaid: number;
+  remainingPayout: number;
 }
 
 function getStartOfMonth() {
@@ -32,14 +34,18 @@ export default function PayoutsPage() {
   const [error, setError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [processedIds, setProcessedIds] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<'PENDING' | 'HISTORY'>('PENDING');
 
   const handleProcess = async (record: PayoutRecord) => {
-    if (!confirm(`Are you sure you want to process ₹${record.paymentAmount.toFixed(2)} for ${record.deliveryPersonName}?`)) return;
+    const amountToProcess = record.remainingPayout !== undefined ? record.remainingPayout : record.paymentAmount;
+    if (amountToProcess <= 0) return;
+    if (!confirm(`Are you sure you want to process ₹${amountToProcess.toFixed(2)} for ${record.deliveryPersonName}?`)) return;
     
     setProcessingId(record.deliveryPersonId);
     try {
-      await processPersonnelPayout(record.deliveryPersonId, startDate, endDate, record.paymentAmount);
+      await processPersonnelPayout(record.deliveryPersonId, startDate, endDate, amountToProcess);
       setProcessedIds(prev => [...prev, record.deliveryPersonId]);
+      await loadPayouts();
     } catch (err: any) {
       alert(err.message || 'Failed to process payout');
     } finally {
@@ -68,6 +74,19 @@ export default function PayoutsPage() {
   const totalPayout = payouts.reduce((sum, record) => sum + record.paymentAmount, 0);
   const totalValue = payouts.reduce((sum, record) => sum + record.totalDeliveryValue, 0);
   const totalDeliveries = payouts.reduce((sum, record) => sum + record.deliveriesCompleted, 0);
+
+  const displayedPayouts = payouts.filter((record) => {
+    const paymentAmount = record.paymentAmount || 0;
+    const alreadyPaid = record.alreadyPaid || 0;
+    const remainingPayout = record.remainingPayout !== undefined ? record.remainingPayout : paymentAmount;
+    const isProcessed = remainingPayout <= 0 || processedIds.includes(record.deliveryPersonId);
+    
+    if (activeTab === 'PENDING') {
+      return !isProcessed && remainingPayout > 0;
+    } else {
+      return isProcessed || alreadyPaid > 0;
+    }
+  });
 
   const handlePrint = () => {
     window.print();
@@ -169,6 +188,28 @@ export default function PayoutsPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex items-center gap-6 border-b border-[#EFEFEF]">
+        <button 
+          onClick={() => setActiveTab('PENDING')}
+          className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'PENDING' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+        >
+          Pending Payouts
+          {activeTab === 'PENDING' && (
+            <span className="absolute bottom-0 left-0 w-full h-[2px] bg-gray-900 rounded-t-full"></span>
+          )}
+        </button>
+        <button 
+          onClick={() => setActiveTab('HISTORY')}
+          className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'HISTORY' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+        >
+          Payout History
+          {activeTab === 'HISTORY' && (
+            <span className="absolute bottom-0 left-0 w-full h-[2px] bg-gray-900 rounded-t-full"></span>
+          )}
+        </button>
+      </div>
+
       {/* Main Table Content */}
       <div className="bg-white border border-[#EFEFEF] rounded-3xl shadow-[0_2px_12px_rgba(0,0,0,0.02)] overflow-hidden">
         <div className="overflow-x-auto w-full">
@@ -178,36 +219,43 @@ export default function PayoutsPage() {
                 <th className="px-6 py-4">Employee Info</th>
                 <th className="px-6 py-4 text-center">Completed Deliveries</th>
                 <th className="px-6 py-4 text-right">Value Delivered</th>
-                <th className="px-6 py-4 text-right">Payout (2.5%)</th>
+                <th className="px-6 py-4 text-right">Total Payout</th>
+                <th className="px-6 py-4 text-right">Remaining to Pay</th>
                 <th className="px-6 py-4 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#EFEFEF]">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
                     <p>Loading payouts...</p>
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-rose-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-rose-500">
                     <div className="inline-flex items-center justify-center p-3 bg-rose-50 rounded-full mb-3">
                       <X className="h-6 w-6" strokeWidth={1.5} />
                     </div>
                     <p className="font-medium text-rose-900">{error}</p>
                   </td>
                 </tr>
-              ) : payouts.length === 0 ? (
+              ) : displayedPayouts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
                     <Wallet className="h-6 w-6 mx-auto mb-2 opacity-50" strokeWidth={1.5} />
-                    <p>No payout data found for this period.</p>
+                    <p>No payout data found.</p>
                   </td>
                 </tr>
               ) : (
-                payouts.map((record) => (
+                displayedPayouts.map((record) => {
+                  const paymentAmount = record.paymentAmount || 0;
+                  const alreadyPaid = record.alreadyPaid || 0;
+                  const remainingPayout = record.remainingPayout !== undefined ? record.remainingPayout : paymentAmount;
+                  const isProcessed = remainingPayout <= 0 || processedIds.includes(record.deliveryPersonId);
+                  
+                  return (
                   <tr key={record.deliveryPersonId} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center">
@@ -229,12 +277,20 @@ export default function PayoutsPage() {
                       ₹{record.totalDeliveryValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 text-right tabular-nums tracking-tight">
-                      <span className="text-sm font-medium text-gray-900">
-                        ₹{record.paymentAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <span className={`text-sm ${alreadyPaid > 0 ? "text-gray-500 line-through" : "font-medium text-gray-900"}`}>
+                        ₹{paymentAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </td>
+                    <td className="px-6 py-4 text-right tabular-nums tracking-tight">
+                      <span className="text-sm font-medium text-gray-900">
+                        ₹{remainingPayout.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      {alreadyPaid > 0 && (
+                        <div className="text-xs text-green-600 mt-1">Paid: ₹{alreadyPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-center">
-                      {processedIds.includes(record.deliveryPersonId) ? (
+                      {isProcessed ? (
                         <span className="inline-flex items-center text-xs font-medium text-green-600 bg-green-50 px-3 py-1.5 rounded-xl border border-green-100">
                           <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
                           Processed
@@ -254,8 +310,9 @@ export default function PayoutsPage() {
                       )}
                     </td>
                   </tr>
-                ))
-              )}
+                )
+              }))
+              }
             </tbody>
           </table>
         </div>
