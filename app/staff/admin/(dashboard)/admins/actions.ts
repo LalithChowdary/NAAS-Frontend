@@ -27,7 +27,10 @@ export async function toggleAdminStatus(id: string, active: boolean) {
     method: 'PATCH',
     headers: await getAuthHeader()
   });
-  if (!res.ok) throw new Error('Failed to update admin status');
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => null);
+    throw new Error(errorData?.message || 'Failed to update admin status');
+  }
   return res.json();
 }
 
@@ -39,7 +42,23 @@ export async function createAdmin(data: any) {
   });
   if (!res.ok) {
     const errorData = await res.json().catch(() => null);
+    // errorData can be field-level map or { message: '...' }
+    if (errorData && typeof errorData === 'object' && !errorData.message) {
+      // It's a field-level validation error map
+      const firstError = Object.values(errorData)[0] as string;
+      throw new Error(firstError || 'Validation failed');
+    }
     throw new Error(errorData?.message || 'Failed to create admin');
   }
   return res.json();
+}
+
+export async function fetchCurrentAdminId() {
+  const res = await fetch(`${API_URL}/api/admin/me`, {
+    headers: await getAuthHeader(),
+    cache: 'no-store'
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.id ?? null;
 }

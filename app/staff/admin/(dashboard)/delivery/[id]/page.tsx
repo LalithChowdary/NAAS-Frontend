@@ -19,6 +19,7 @@ interface DeliveryPerson {
 interface DeliveryRecord {
   id: string;
   customerId: string;
+  customerName?: string;
   deliveryDate: string;
   status: string;
   notes?: string;
@@ -118,7 +119,7 @@ export default function DeliveryPersonDetailPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-gray-500">Employee ID</p>
-                <p className="text-sm font-medium text-gray-900 truncate">{person.employeeId || `DP-${person.id}`}</p>
+                <p className="text-sm font-medium text-gray-900 font-mono">{person.employeeId || "Not assigned"}</p>
               </div>
             </div>
 
@@ -159,7 +160,7 @@ export default function DeliveryPersonDetailPage() {
               <thead className="bg-[#FBFBFD] border-b border-[#EFEFEF] text-gray-400">
                 <tr>
                   <th className="px-6 py-4 font-medium">Date</th>
-                  <th className="px-6 py-4 font-medium">Customer Ref</th>
+                  <th className="px-6 py-4 font-medium">Customer</th>
                   <th className="px-6 py-4 font-medium">Status</th>
                   <th className="px-6 py-4 font-medium text-right">Notes</th>
                 </tr>
@@ -183,7 +184,11 @@ export default function DeliveryPersonDetailPage() {
                         <div className="text-xs text-gray-400 mt-0.5">Record #{record.id}</div>
                       </td>
                       <td className="px-6 py-4 text-gray-900">
-                        {record.customerId ? `CID-${record.customerId}` : "Direct"}
+                        {record.customerName
+                          ? record.customerName
+                          : record.customerId
+                          ? <span className="text-gray-400 font-mono text-xs">{`CID-${record.customerId.slice(0, 8)}…`}</span>
+                          : "Direct"}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-full border ${

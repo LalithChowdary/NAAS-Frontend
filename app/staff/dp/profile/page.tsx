@@ -158,7 +158,7 @@ export default function DeliveryProfilePage() {
                         <div className="relative z-10">
                           <p className="text-xs text-slate-500 mb-0.5">Full Legal Name</p>
                           <p className="text-sm font-medium text-slate-900">{profile.name}</p>
-                          <p className="text-xs text-slate-400 mt-1">ID: {profile.employeeId || `DP-${profile.id}`}</p>
+                          <p className="text-xs text-slate-400 mt-1">ID: {profile.employeeId || 'Not assigned'}</p>
                         </div>
                       </div>
 

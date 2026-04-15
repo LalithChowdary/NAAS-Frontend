@@ -461,7 +461,7 @@ export async function fetchDashboardMetrics() {
       paidAmount?: number;
       billingMonth?: string;
     };
-    type DeliveryRow = { status?: string };
+    type DeliveryRow = { status?: string; deliveryStatus?: string };
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -541,7 +541,7 @@ export async function fetchDashboardMetrics() {
       .slice(0, 5);
 
     const totalDeliveries = deliveries.length;
-    const completedDeliveries = deliveries.filter((d) => d.status === 'DELIVERED').length;
+    const completedDeliveries = deliveries.filter((d) => d.status === 'DELIVERED' || (d as any).deliveryStatus === 'DELIVERED').length;
     const pendingDeliveries = Math.max(totalDeliveries - completedDeliveries, 0);
 
     return {

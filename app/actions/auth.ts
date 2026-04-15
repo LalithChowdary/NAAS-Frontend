@@ -56,20 +56,30 @@ export async function signup(_prevState: unknown, formData: FormData) {
   const name = formData.get('name');
   const email = formData.get('email');
   const password = formData.get('password');
+  const phone = formData.get('phone');
 
   if (!name || !email || !password) {
     return { error: 'Please fill out all fields.' };
+  }
+
+  if (!phone) {
+    return { error: 'Phone number is required.' };
   }
 
   try {
     const res = await fetch(`${API_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, role: 'CUSTOMER' }), // Assuming backend can accept role or defaults to customer
+      body: JSON.stringify({ name, email, password, phone, role: 'CUSTOMER' }),
     });
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
+      // Handle field-level validation errors (map of field -> message)
+      if (errorData && typeof errorData === 'object' && !errorData.message) {
+        const firstError = Object.values(errorData)[0] as string;
+        return { error: firstError || 'Signup failed. Please check your details.' };
+      }
       return { error: errorData.message || 'Signup failed. Email might already be in use.' };
     }
 

@@ -252,7 +252,6 @@ export default function BillingDashboardPage() {
                     <tr key={bill.id} className="hover:bg-[#FBFBFD] transition-colors">
                       <td className="px-6 py-3">
                         <div className="font-medium text-gray-900">{bill.customerName}</div>
-                        <div className="text-xs text-gray-400">#{bill.customerId}</div>
                       </td>
                       <td className="px-6 py-3">{formatBillingMonth(bill.billingMonth)}</td>
                       <td className="px-6 py-3 font-medium text-gray-900">{formatMoney(bill.totalAmount)}</td>

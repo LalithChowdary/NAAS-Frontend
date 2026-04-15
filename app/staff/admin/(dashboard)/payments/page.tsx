@@ -60,6 +60,7 @@ export default function PaymentsPage() {
   const [paymentAmount, setPaymentAmount] = useState<string>("");
   const [paymentMode, setPaymentMode] = useState<"CASH" | "CHEQUE">("CASH");
   const [chequeNumber, setChequeNumber] = useState<string>("");
+  const [receiptNote, setReceiptNote] = useState<string>("");
   const [paymentDate, setPaymentDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -118,14 +119,14 @@ export default function PaymentsPage() {
       setSubmitLoading(true);
       setSubmitError("");
 
-      const receiptNote = `Recorded on ${paymentDate}`;
+      const finalReceiptNote = receiptNote ? `${receiptNote} (Recorded on ${paymentDate})` : `Recorded on ${paymentDate}`;
 
       const res = await recordPayment(
         selectedBillId as string,
         parseFloat(paymentAmount),
         paymentMode,
         paymentMode === "CHEQUE" ? chequeNumber : "",
-        receiptNote
+        finalReceiptNote
       );
 
       if (!res.ok) {
@@ -149,6 +150,7 @@ export default function PaymentsPage() {
     setPaymentAmount("");
     setPaymentMode("CASH");
     setChequeNumber("");
+    setReceiptNote("");
     setPaymentDate(new Date().toISOString().split("T")[0]);
     setSubmitError("");
   };
@@ -271,20 +273,21 @@ export default function PaymentsPage() {
                 <th className="px-6 py-4">Payment Date</th>
                 <th className="px-6 py-4">Payment Mode</th>
                 <th className="px-6 py-4">Reference</th>
+                <th className="px-6 py-4">Note</th>
                 <th className="px-6 py-4 text-right">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#EFEFEF]">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
                     <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
                     <p>Loading payments...</p>
                   </td>
                 </tr>
               ) : payments.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
                     <div className="mx-auto w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
                       <Search className="h-5 w-5 text-gray-300" />
                     </div>
@@ -293,7 +296,7 @@ export default function PaymentsPage() {
                 </tr>
               ) : filteredPayments.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={7} className="px-6 py-12 text-center text-gray-400">
                     <span>No payments match your current criteria.</span>
                   </td>
                 </tr>
@@ -302,7 +305,6 @@ export default function PaymentsPage() {
                   <tr key={p.id} className="hover:bg-[#FBFBFD] transition-colors">
                     <td className="px-6 py-4">
                       <div className="font-medium text-gray-900">{p.customerName}</div>
-                      <div className="text-xs text-gray-400">ID #{p.customerId}</div>
                     </td>
                     <td className="px-6 py-4 font-medium text-gray-900">
                       {formatMoney(p.amount)}
@@ -326,6 +328,9 @@ export default function PaymentsPage() {
                       ) : (
                         "—"
                       )}
+                    </td>
+                    <td className="px-6 py-4 text-gray-500 text-xs max-w-[200px] truncate" title={p.receiptNote}>
+                      {p.receiptNote || "—"}
                     </td>
                     <td className="px-6 py-4 text-right">
                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border ${
@@ -423,10 +428,11 @@ export default function PaymentsPage() {
                     min="0"
                     step="0.01"
                     value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:bg-white transition-all outline-none"
+                    disabled
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-900 cursor-not-allowed"
                     placeholder="0.00"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Full bill amount must be paid.</p>
                 </div>
 
                 {/* Payment Mode */}
@@ -487,6 +493,18 @@ export default function PaymentsPage() {
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gray-900 focus:bg-white transition-all outline-none text-gray-700"
                   />
                   <p className="text-[10px] text-gray-400 mt-1">Receipt will reflect server timestamp in production.</p>
+                </div>
+
+                {/* Receipt Note */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Receipt Note / Reference (Optional)</label>
+                  <textarea
+                    value={receiptNote}
+                    onChange={(e) => setReceiptNote(e.target.value)}
+                    placeholder="e.g. Transaction ID, remarks, etc."
+                    rows={2}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:bg-white transition-all outline-none resize-none"
+                  />
                 </div>
               </div>
 

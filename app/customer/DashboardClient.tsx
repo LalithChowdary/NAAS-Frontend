@@ -7,7 +7,8 @@ import {
   suspendSubscriptionAction, 
   updateSubscriptionItemAction,
   removeSubscriptionSuspensionAction,
-  removeSubscriptionItemSuspensionAction 
+  removeSubscriptionItemSuspensionAction,
+  changeSubscriptionAddressAction
 } from '../actions/subscription';
 
 type SubscriptionItem = {
@@ -20,7 +21,7 @@ type SubscriptionItem = {
 };
 
 type Subscription = {
-  id: number;
+  id: string;
   publicationName: string;
   status: string;
   startDate: string;
@@ -28,12 +29,15 @@ type Subscription = {
   suspendStartDate: string | null;
   suspendEndDate: string | null;
   createdAt: string;
+  address?: string;
+  addressId?: string;
   items?: SubscriptionItem[];
 };
 
-export default function DashboardClient({ subscriptions }: { subscriptions: Subscription[] }) {
+export default function DashboardClient({ subscriptions, addresses }: { subscriptions: Subscription[], addresses?: any[] }) {
   const router = useRouter();
-  const [modal, setModal] = useState<{ type: 'PAUSE_SUB' | 'EDIT_PAUSE_SUB' | 'CANCEL_SUB' | 'PAUSE_ITEM' | 'EDIT_PAUSE_ITEM' | 'CANCEL_ITEM' | null; subId: number | string | null; itemId?: string | null }>({ type: null, subId: null });
+  const [modal, setModal] = useState<{ type: 'PAUSE_SUB' | 'EDIT_PAUSE_SUB' | 'CHANGE_ADDRESS' | 'CANCEL_SUB' | 'PAUSE_ITEM' | 'EDIT_PAUSE_ITEM' | 'CANCEL_ITEM' | null; subId: number | string | null; itemId?: string | null }>({ type: null, subId: null });
+  const [newAddressId, setNewAddressId] = useState<string>('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
@@ -51,15 +55,17 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
 
     let res;
     if (modal.type === 'PAUSE_SUB' || modal.type === 'EDIT_PAUSE_SUB') {
-      res = await suspendSubscriptionAction(modal.subId as number, startDate, endDate);
+      res = await suspendSubscriptionAction(modal.subId as string, startDate, endDate);
     } else if (modal.type === 'CANCEL_SUB') {
-      res = await cancelSubscriptionAction(modal.subId as number, startDate);
+      res = await cancelSubscriptionAction(modal.subId as string, startDate);
     } else if (modal.type === 'PAUSE_ITEM' || modal.type === 'EDIT_PAUSE_ITEM') {
       if (modal.itemId) {
         res = await updateSubscriptionItemAction(modal.subId, modal.itemId, 'SUSPENDED', startDate, endDate);
       }
     } else if (modal.type === 'CANCEL_ITEM' && modal.itemId) {
       res = await updateSubscriptionItemAction(modal.subId, modal.itemId, 'REMOVED', startDate, null);
+    } else if (modal.type === 'CHANGE_ADDRESS') {
+      res = await changeSubscriptionAddressAction(modal.subId, newAddressId);
     }
 
     if (res?.error) {
@@ -79,7 +85,7 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
 
     let res;
     if (modal.type === 'EDIT_PAUSE_SUB') {
-      res = await removeSubscriptionSuspensionAction(modal.subId as number);
+      res = await removeSubscriptionSuspensionAction(modal.subId as string);
     } else if (modal.type === 'EDIT_PAUSE_ITEM' && modal.itemId) {
       res = await removeSubscriptionItemSuspensionAction(modal.subId, modal.itemId);
     }
@@ -139,9 +145,17 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
                   <h3 className="text-xl font-medium tracking-tight text-slate-900">{sub.publicationName || "Mixed Subscription"}</h3>
                   <p className="text-xs text-slate-400 mt-1">Starting {new Date(sub.startDate).toLocaleDateString()}</p>
                 </div>
-                <div className="text-right">
-                   <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">ID</p>
-                   <p className="text-sm text-slate-900 font-mono">#{sub.id}</p>
+                <div className="text-right max-w-[200px]">
+                   <p className="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1">Delivery Address</p>
+                   <p className="text-sm text-slate-900 truncate" title={sub.address || 'Direct pickup'}>{sub.address || 'Direct pickup'}</p>
+                   {addresses && addresses.length > 0 && (
+                     <button
+                       onClick={() => { setModal({ type: 'CHANGE_ADDRESS', subId: sub.id }); setNewAddressId(sub.addressId || ''); }}
+                       className="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-widest mt-1 block ml-auto"
+                     >
+                       Change
+                     </button>
+                   )}
                 </div>
               </div>
 
@@ -224,15 +238,36 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/20 backdrop-blur-sm transition-opacity">
           <div className="bg-white p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden relative">
             <h3 className="text-2xl font-semibold text-slate-900 tracking-tight mb-2">
-              {modal.type.includes('PAUSE') ? (modal.type.startsWith('EDIT') ? 'Edit Pause' : 'Pause Deliveries') : 'Cancel Subscription'}
+              {modal.type === 'CHANGE_ADDRESS' ? 'Change Delivery Address' : modal.type.includes('PAUSE') ? (modal.type.startsWith('EDIT') ? 'Edit Pause' : 'Pause Deliveries') : 'Cancel Subscription'}
             </h3>
             <p className="text-slate-500 font-light text-sm mb-8 leading-relaxed">
-              {modal.type.includes('PAUSE') 
+              {modal.type === 'CHANGE_ADDRESS' 
+                ? 'Select a new address for your deliveries. Only your saved addresses are shown below.' 
+                : modal.type.includes('PAUSE') 
                 ? 'Select the dates you want to pause your deliveries. The earliest valid change date is 2 days from today.'
                 : 'Choose when you would like your final delivery. Auto-renew will be permanently disabled after this date.'}
             </p>
 
             <div className="space-y-5 mb-8">
+              {modal.type === 'CHANGE_ADDRESS' ? (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
+                    Delivery Address
+                  </label>
+                  <select 
+                    value={newAddressId} 
+                    onChange={e => setNewAddressId(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-100 transition-all font-medium"
+                  >
+                    <option value="" disabled>Select an address</option>
+                    {addresses?.map(addr => (
+                      <option key={addr.id} value={addr.id}>
+                        {addr.label} - {addr.address}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
               <div>
                 <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
                   {modal.type.includes('PAUSE') ? 'Pause Starts On' : 'Cancel Date'}
@@ -246,6 +281,7 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 outline-none focus:bg-white focus:border-slate-300 focus:ring-4 focus:ring-slate-100 transition-all font-medium"
                 />
               </div>
+              )}
 
               {modal.type.includes('PAUSE') && (
                 <div>
@@ -284,14 +320,14 @@ export default function DashboardClient({ subscriptions }: { subscriptions: Subs
                 <button 
                   onClick={handleSubmit}
                   data-testid="confirm-action-btn"
-                  disabled={loading || !startDate}
+                  disabled={loading || (modal.type === 'CHANGE_ADDRESS' ? !newAddressId : !startDate)}
                   className={`flex-1 py-4 text-sm font-medium text-white rounded-full transition-all flex items-center justify-center ${
                     modal.type.includes('CANCEL') ? 'bg-red-600 hover:bg-red-700' : 'bg-slate-900 hover:bg-black'
                   } disabled:opacity-50`}>
                   {loading ? (
                      <div data-testid="loader-spinner" className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
-                    modal.type.includes('PAUSE') ? 'Save Dates' : 'Confirm Cancel'
+                    modal.type === 'CHANGE_ADDRESS' ? 'Save Address' : modal.type.includes('PAUSE') ? 'Save Dates' : 'Confirm Cancel'
                   )}
                 </button>
               </div>

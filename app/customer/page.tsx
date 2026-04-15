@@ -95,11 +95,11 @@ export default async function CustomerDashboard() {
           <ProfileCardClient profile={profile} fallbackEmail={user?.email} />
 
           {/* Card 4: Saved Addresses */}
-          <AddressListCard addresses={addresses || []} />
+          <AddressListCard addresses={addresses || []} subscriptions={subscriptions || []} />
         </div>
 
         {/* Subscriptions Management Area */}
-        <DashboardClient subscriptions={subscriptions || []} />
+        <DashboardClient subscriptions={subscriptions || []} addresses={addresses || []} />
         
       </main>
     </div>

@@ -43,7 +43,34 @@ export async function createSubscriptionAction(payload: {
   }
 }
 
-export async function suspendSubscriptionAction(subId: number, suspendStartDate: string, suspendEndDate: string | null) {
+export async function changeSubscriptionAddressAction(subId: number | string, addressId: string) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('customer_token')?.value;
+  if (!token) return { error: 'Unauthorized' };
+
+  try {
+    const res = await fetch(`${API_URL}/api/customer/subscriptions/${subId}/address`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ addressId })
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      try { return { error: JSON.parse(text).message }; }
+      catch { return { error: 'Failed to change subscription address' }; }
+    }
+
+    return { ok: true, success: true };
+  } catch (error: any) {
+    return { error: error.message };
+  }
+}
+
+export async function suspendSubscriptionAction(subId: string | number, suspendStartDate: string, suspendEndDate: string | null) {
   const cookieStore = await cookies();
   const token = cookieStore.get('customer_token')?.value;
   if (!token) return { error: 'Unauthorized' };
@@ -72,7 +99,7 @@ export async function suspendSubscriptionAction(subId: number, suspendStartDate:
   }
 }
 
-export async function cancelSubscriptionAction(subId: number, cancelDate: string) {
+export async function cancelSubscriptionAction(subId: string | number, cancelDate: string) {
   const cookieStore = await cookies();
   const token = cookieStore.get('customer_token')?.value;
   if (!token) return { error: 'Unauthorized' };
@@ -135,7 +162,7 @@ export async function updateSubscriptionItemAction(
   }
 }
 
-export async function removeSubscriptionSuspensionAction(subId: number) {
+export async function removeSubscriptionSuspensionAction(subId: string | number) {
   const cookieStore = await cookies();
   const token = cookieStore.get('customer_token')?.value;
   if (!token) return { error: 'Unauthorized' };

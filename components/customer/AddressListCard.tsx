@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { deleteAddressAction } from '@/app/actions/address';
 
 export type Address = {
-  id: number;
+  id: string;
   label: string;
   address: string;
   latitude: number;
@@ -16,19 +16,30 @@ export type Address = {
   landmark?: string;
 };
 
-export default function AddressListCard({ addresses }: { addresses: Address[] }) {
+export default function AddressListCard({ addresses, subscriptions = [] }: { addresses: Address[], subscriptions?: any[] }) {
   const [showModal, setShowModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const router = useRouter();
 
+  const isAddressLinked = (addrId: string) => {
+    return subscriptions.some(sub => sub.addressId === addrId);
+  };
+
   const handleEdit = (addr: Address) => {
+    if (isAddressLinked(addr.id) && !confirm('This address is currently linked to one or more subscriptions. Editing it will change the delivery address for those subscriptions. Do you want to proceed?')) {
+      return;
+    }
     setEditingAddress(addr);
     setShowModal(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
+    if (isAddressLinked(id)) {
+      alert('You cannot delete an address that is currently linked to an active subscription.');
+      return;
+    }
     if (confirm('Are you sure you want to delete this address?')) {
-      const res = await deleteAddressAction(id.toString());
+      const res = await deleteAddressAction(id);
       if (res.success) {
         router.refresh();
       } else {

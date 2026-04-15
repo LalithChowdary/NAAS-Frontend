@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, ChevronRight, Loader2, CreditCard, Calendar, Clock, Download, CheckCircle } from "lucide-react";
-import { fetchAdminBillById, markAdminBillStatus } from "../../../actions";
+import { ArrowLeft, ChevronRight, Loader2, CreditCard, Calendar, Clock, Download, CheckCircle, X } from "lucide-react";
+import { fetchAdminBillById, markAdminBillStatus, recordPayment } from "../../../actions";
 
 interface BillItem {
   id: string;
@@ -28,6 +28,12 @@ interface Bill {
 export default function BillDetailPage() {
   const params = useParams();
   const router = useRouter();
+
+  // Payment Modal State
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [chequeNumber, setChequeNumber] = useState("");
+  const [receiptNote, setReceiptNote] = useState("");
   const billId = params.id as string;
   
   const [bill, setBill] = useState<Bill | null>(null);
@@ -60,17 +66,30 @@ export default function BillDetailPage() {
     }
   }, [billId]);
 
-  const handleMarkPaid = async () => {
+  const handleMarkPaid = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bill) return;
+
     try {
       setActionLoading(true);
+      // First save the payment record
+      const paymentRes = await recordPayment(bill.id, bill.totalAmount, paymentMethod, chequeNumber, receiptNote);
+      
+      if (!paymentRes.ok) {
+        alert(paymentRes.message || "Failed to record payment details.");
+        return;
+      }
+
+      // Then mark the bill status as PAID
       const res = await markAdminBillStatus(billId, "PAID");
       if (res.ok) {
+        setPaymentModalOpen(false);
         await loadData();
       } else {
-        alert(res.message || "Failed to update bill status.");
+        alert(res.message || "Payment recorded, but failed to update bill status.");
       }
     } catch (err) {
-      alert("Failed to update status due to network error.");
+      alert("Failed to submit payment details due to network error.");
     } finally {
       setActionLoading(false);
     }
@@ -134,7 +153,7 @@ export default function BillDetailPage() {
         <div className="flex items-center gap-2">
            {uiStatus !== 'PAID' && (
              <button 
-               onClick={handleMarkPaid}
+               onClick={() => setPaymentModalOpen(true)}
                disabled={actionLoading}
                className="inline-flex items-center px-4 py-2 bg-black text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition-colors"
              >
@@ -255,6 +274,93 @@ export default function BillDetailPage() {
         </div>
         
       </div>
+
+      {/* Payment Details Modal */}
+      {paymentModalOpen && bill && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-xl font-semibold text-gray-900">Record Payment</h2>
+              <button 
+                onClick={() => setPaymentModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleMarkPaid} className="p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Amount Received</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₹</span>
+                  <input 
+                    type="number" 
+                    value={bill.totalAmount}
+                    disabled
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-4 py-2.5 text-gray-900 font-medium cursor-not-allowed"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Full amount must be settled.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                <select 
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                >
+                  <option value="CASH">Cash</option>
+                  <option value="CHEQUE">Cheque</option>
+                </select>
+              </div>
+
+              {paymentMethod === "CHEQUE" && (
+                <div className="animate-in fade-in slide-in-from-top-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cheque Number <span className="text-red-500">*</span></label>
+                  <input 
+                    type="text" 
+                    required
+                    value={chequeNumber}
+                    onChange={(e) => setChequeNumber(e.target.value)}
+                    placeholder="e.g. 123456"
+                    className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Receipt Note / Reference (Optional)</label>
+                <textarea 
+                  value={receiptNote}
+                  onChange={(e) => setReceiptNote(e.target.value)}
+                  placeholder="e.g. Transaction ID, remarks, etc."
+                  rows={2}
+                  className="w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all resize-none"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPaymentModalOpen(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="flex-1 px-4 py-2.5 bg-black text-white font-medium rounded-xl hover:bg-gray-800 transition-colors disabled:opacity-70 flex items-center justify-center"
+                >
+                  {actionLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Confirm Payment"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
