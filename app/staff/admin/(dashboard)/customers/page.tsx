@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Search, Eye, AlertCircle, Loader2 } from "lucide-react";
-import { fetchCustomers, toggleCustomerStatus } from "./actions";
+import { fetchCustomers } from "./actions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -52,17 +52,6 @@ export default function CustomersPage() {
     return true;
   });
 
-  const handleToggleStatus = async (customer: Customer) => {
-    try {
-      // Optimistic update
-      setCustomers(custs => custs.map(c => c.id === customer.id ? { ...c, active: !c.active } : c));
-      await toggleCustomerStatus(customer.id, !customer.active);
-    } catch (err) {
-      // Revert on error
-      setCustomers(custs => custs.map(c => c.id === customer.id ? { ...c, active: customer.active } : c));
-      setError("Failed to change status.");
-    }
-  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -169,22 +158,6 @@ export default function CustomersPage() {
                             <Eye className="h-3.5 w-3.5" strokeWidth={2} /> View
                           </span>
                         </Link>
-                        <button 
-                          onClick={(e) => {
-                             e.stopPropagation();
-                             handleToggleStatus(customer);
-                          }}
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            customer.active 
-                              ? "text-gray-400 hover:text-amber-600 hover:bg-amber-50" 
-                              : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"
-                          }`}
-                          title={customer.active ? "Disable Customer" : "Enable Customer"}
-                        >
-                          <span className="text-xs font-medium px-1.5">
-                            {customer.active ? "Disable" : "Enable"}
-                          </span>
-                        </button>
                       </div>
                     </td>
                   </tr>

@@ -162,13 +162,12 @@ export default function DeliveryPersonDetailPage() {
                   <th className="px-6 py-4 font-medium">Date</th>
                   <th className="px-6 py-4 font-medium">Customer</th>
                   <th className="px-6 py-4 font-medium">Status</th>
-                  <th className="px-6 py-4 font-medium text-right">Notes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EFEFEF]">
                 {deliveries.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-gray-400">
+                    <td colSpan={3} className="px-6 py-12 text-center text-gray-400">
                       <Package className="h-6 w-6 mx-auto mb-2 text-gray-300" strokeWidth={1.5} />
                       <p>No deliveries recorded yet.</p>
                     </td>
@@ -202,9 +201,6 @@ export default function DeliveryPersonDetailPage() {
                         }`}>
                           {record.status}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 text-right text-xs truncate max-w-[150px]" title={record.notes}>
-                        {record.notes || "—"}
                       </td>
                     </tr>
                   ))
