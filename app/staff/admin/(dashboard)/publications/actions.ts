@@ -58,3 +58,19 @@ export async function togglePublicationStatus(id: number, enabled: boolean) {
   if (!res.ok) throw new Error('Failed to toggle status');
   return res.json();
 }
+
+export async function uploadImage(formData: FormData) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('admin_token')?.value;
+
+  const res = await fetch(`${API_URL}/api/admin/files/upload`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`
+      // Do not set Content-Type header when sending FormData; the browser/fetch handles the multipart boundary.
+    },
+    body: formData
+  });
+  if (!res.ok) throw new Error('Failed to upload image');
+  return res.json();
+}

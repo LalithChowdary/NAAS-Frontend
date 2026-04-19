@@ -9,6 +9,7 @@ interface Publication {
   type: string;
   price: number;
   description: string;
+  imageUrl?: string;
   enabled: boolean;
 }
 

@@ -9,7 +9,8 @@ import {
   fetchPublications, 
   createPublication, 
   updatePublication, 
-  togglePublicationStatus 
+  togglePublicationStatus,
+  uploadImage
 } from "./actions";
 
 interface Publication {
@@ -48,6 +49,8 @@ export default function PublicationsPage() {
     enabled: true
   });
 
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -85,6 +88,7 @@ export default function PublicationsPage() {
       imageUrl: "",
       enabled: true
     });
+    setSelectedImageFile(null);
     setIsModalOpen(true);
   };
 
@@ -99,11 +103,13 @@ export default function PublicationsPage() {
       imageUrl: pub.imageUrl || "",
       enabled: pub.enabled
     });
+    setSelectedImageFile(null);
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setSelectedImageFile(null);
   };
 
   const handleToggleStatus = async (pub: Publication) => {
@@ -121,23 +127,36 @@ export default function PublicationsPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError("");
     
-    // Build payload mapping local state
-    const payload = {
-      name: formData.name,
-      type: formData.type,
-      price: parseFloat(formData.price),
-      description: formData.description || undefined,
-      imageUrl: formData.imageUrl || undefined
-    };
-
     try {
+      let finalImageUrl = formData.imageUrl;
+
+      if (selectedImageFile) {
+        const fileData = new FormData();
+        fileData.append("file", selectedImageFile);
+        const res = await uploadImage(fileData);
+        if (res.url) {
+          finalImageUrl = res.url;
+        }
+      }
+
+      // Build payload mapping local state
+      const payload = {
+        name: formData.name,
+        type: formData.type,
+        price: parseFloat(formData.price),
+        description: formData.description || undefined,
+        imageUrl: finalImageUrl || undefined
+      };
+
       if (editingPub) {
         await updatePublication(editingPub.id, payload);
       } else {
         await createPublication(payload);
       }
       setIsModalOpen(false);
+      setSelectedImageFile(null);
       loadData(); // Refresh data
     } catch (err: any) {
       setError(err.message || "Failed to save publication.");
@@ -337,21 +356,39 @@ export default function PublicationsPage() {
             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[70vh]">
               <div className="space-y-5">
                 
-                {/* Image Placeholder Input (Future) */}
+                {/* Cover Image Input */}
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1.5">Cover Image (Optional)</label>
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gray-50 border border-dashed border-gray-300 flex flex-shrink-0 items-center justify-center">
-                       <ImageIcon className="h-5 w-5 text-gray-400" strokeWidth={1} />
+                    <div className="w-12 h-12 rounded-xl bg-gray-50 border border-dashed border-gray-300 flex flex-shrink-0 items-center justify-center overflow-hidden">
+                       {(selectedImageFile || formData.imageUrl) ? (
+                         <img 
+                           src={selectedImageFile ? URL.createObjectURL(selectedImageFile) : formData.imageUrl} 
+                           alt="Preview" 
+                           className="w-full h-full object-cover" 
+                         />
+                       ) : (
+                         <ImageIcon className="h-5 w-5 text-gray-400" strokeWidth={1} />
+                       )}
                     </div>
-                    <input 
-                      type="url"
-                      placeholder="https://example.com/image.jpg"
-                      value={formData.imageUrl}
-                      onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
-                      className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-1 focus:ring-gray-900 focus:border-gray-900 transition-all placeholder:text-gray-400"
-                    />
+                    <div className="flex-1">
+                      <input 
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setSelectedImageFile(e.target.files[0]);
+                          }
+                        }}
+                        className="w-full text-sm outline-none transition-all text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border file:border-gray-200 file:text-sm file:font-medium file:bg-white file:text-gray-700 hover:file:bg-gray-50 file:cursor-pointer file:shadow-sm"
+                      />
+                    </div>
                   </div>
+                  {formData.imageUrl && !selectedImageFile && (
+                    <p className="mt-2 text-[10px] text-gray-400 truncate w-full" title={formData.imageUrl}>
+                      Current: {formData.imageUrl}
+                    </p>
+                  )}
                 </div>
 
                 <div>
