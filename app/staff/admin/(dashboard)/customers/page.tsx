@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Search, Eye, AlertCircle, Loader2 } from "lucide-react";
-import { fetchCustomers } from "./actions";
+import { fetchCustomers, toggleCustomerStatus } from "./actions";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -51,6 +51,18 @@ export default function CustomersPage() {
     if (filterStatus === "INACTIVE") return !customer.active;
     return true;
   });
+
+  const handleToggleStatus = async (customer: Customer, currentActiveStatus: boolean) => {
+    try {
+      // Optimistic update
+      setCustomers(custs => custs.map(c => c.id === customer.id ? { ...c, active: !currentActiveStatus } : c));
+      await toggleCustomerStatus(customer.id, !currentActiveStatus);
+    } catch (err) {
+      // Revert on error
+      setCustomers(custs => custs.map(c => c.id === customer.id ? { ...c, active: currentActiveStatus } : c));
+      setError("Failed to change status.");
+    }
+  };
 
 
   return (
@@ -158,6 +170,22 @@ export default function CustomersPage() {
                             <Eye className="h-3.5 w-3.5" strokeWidth={2} /> View
                           </span>
                         </Link>
+                        <button 
+                          onClick={(e) => {
+                             e.stopPropagation();
+                             handleToggleStatus(customer, customer.active);
+                          }}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            customer.active 
+                              ? "text-gray-400 hover:text-amber-600 hover:bg-amber-50" 
+                              : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"
+                          }`}
+                          title={customer.active ? "Disable Account" : "Enable Account"}
+                        >
+                          <span className="text-xs font-medium px-1.5">
+                            {customer.active ? "Disable" : "Enable"}
+                          </span>
+                        </button>
                       </div>
                     </td>
                   </tr>

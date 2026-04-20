@@ -42,11 +42,8 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const publications = await getPublications(search);
 
   return (
-    <>
-      <HeroSection />
-      <CategoriesSection />
+    <div className="min-h-screen bg-[#FBFBFD] pt-12 pb-24">
       <FeaturedPublications publications={publications} />
-      <FeaturesSection />
-    </>
+    </div>
   );
 }

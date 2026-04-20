@@ -17,16 +17,7 @@ export default function Footer() {
           <div className="flex flex-col items-start md:items-end gap-6">
             <div className="flex items-center gap-6">
               <Link href="/about" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
-                About Us
-              </Link>
-              <Link href="/contact" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
-                Contact
-              </Link>
-              <Link href="/terms" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
-                Terms
-              </Link>
-              <Link href="/privacy" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
-                Privacy
+                About & Contact
               </Link>
             </div>
             <p className="text-xs text-slate-400">

@@ -36,3 +36,29 @@ export async function updateProfileAction(data: {
     return { error: 'An error occurred while updating the profile' };
   }
 }
+
+export async function deactivateAccountAction() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('customer_token')?.value;
+
+  if (!token) {
+    return { error: 'Not authenticated' };
+  }
+
+  try {
+    const response = await fetch(`${BACKEND_API_URL}/api/customer/account`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+
+    if (!response.ok) {
+      return { error: 'Failed to deactivate account' };
+    }
+
+    cookieStore.delete('customer_token');
+    cookieStore.delete('role');
+    return { success: true };
+  } catch (error) {
+    return { error: 'An error occurred' };
+  }
+}

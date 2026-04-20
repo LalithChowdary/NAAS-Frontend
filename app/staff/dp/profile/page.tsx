@@ -2,10 +2,11 @@
 
 // Replaced large block with inline states and Modal UI
 import { useEffect, useState } from "react";
-import { fetchDpProfile, dpLogout, updateDpProfile, fetchDpHistory } from "../actions";
+import { fetchDpProfile, dpLogout, updateDpProfile, fetchDpHistory, deactivateDpAccountAction } from "../actions";
 import DeliveryHeader from "../components/DeliveryHeader";
 import { Loader2, ArrowRight, User, MapPin, Mail, FileText, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface DeliveryPersonProfile {
   id: number;
@@ -17,6 +18,7 @@ interface DeliveryPersonProfile {
 }
 
 export default function DeliveryProfilePage() {
+  const router = useRouter();
   const [profile, setProfile] = useState<DeliveryPersonProfile | null>(null);
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +29,11 @@ export default function DeliveryProfilePage() {
   const [editForm, setEditForm] = useState({ name: "", phone: "" });
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+
+  // Disable Account State
+  const [showDisableConfirm, setShowDisableConfirm] = useState(false);
+  const [isDisabling, setIsDisabling] = useState(false);
+  const [disableError, setDisableError] = useState("");
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -60,6 +67,18 @@ export default function DeliveryProfilePage() {
       setSaveError(err.message || "Failed to save profile");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDisableAccount = async () => {
+    setIsDisabling(true);
+    setDisableError("");
+    const res = await deactivateDpAccountAction();
+    if (res?.error) {
+      setDisableError(res.error);
+      setIsDisabling(false);
+    } else {
+      router.push('/staff/dp/login');
     }
   };
 
@@ -139,15 +158,23 @@ export default function DeliveryProfilePage() {
                            Active
                          </span>
                        </div>
-                       <button 
-                         onClick={() => {
-                           setEditForm({ name: profile.name, phone: profile.phone || "" });
-                           setIsEditModalOpen(true);
-                         }}
-                         className="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors px-3 py-1.5 rounded-full border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-white active:scale-95 z-10"
-                       >
-                         Edit
-                       </button>
+                       <div className="flex items-center gap-2">
+                         <button 
+                           onClick={() => {
+                             setEditForm({ name: profile.name, phone: profile.phone || "" });
+                             setIsEditModalOpen(true);
+                           }}
+                           className="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors px-3 py-1.5 rounded-full border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-white active:scale-95 z-10"
+                         >
+                           Edit
+                         </button>
+                         <button
+                           onClick={() => setShowDisableConfirm(true)}
+                           className="text-xs font-medium text-rose-400 hover:text-rose-600 hover:bg-rose-50 transition-colors px-3 py-1.5 rounded-full border border-rose-100 hover:border-rose-200 active:scale-95 z-10"
+                         >
+                           Disable Account
+                         </button>
+                       </div>
                     </div>
                     
                     <div className="space-y-6">
@@ -321,6 +348,37 @@ export default function DeliveryProfilePage() {
                   </button>
                </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Disable Account Confirmation Modal */}
+      {showDisableConfirm && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/20 backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-semibold text-slate-900 tracking-tight mb-2">Disable Account?</h3>
+            <p className="text-slate-500 font-light text-sm mb-8 leading-relaxed">
+              Your account will be deactivated and you'll be logged out. Contact an admin to re-enable access.
+            </p>
+            {disableError && <div className="p-3 mb-4 rounded-xl bg-red-50 text-red-600 text-sm">{disableError}</div>}
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowDisableConfirm(false)}
+                disabled={isDisabling}
+                className="px-6 py-3 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDisableAccount}
+                disabled={isDisabling}
+                className="px-8 py-3 rounded-full text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDisabling ? (
+                  <><div className="w-4 h-4 rounded-full border-2 border-rose-300 border-t-white animate-spin"></div> Disabling...</>
+                ) : 'Yes, Disable My Account'}
+              </button>
+            </div>
           </div>
         </div>
       )}

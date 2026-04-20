@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { updateProfileAction } from '../actions/profile';
+import { updateProfileAction, deactivateAccountAction } from '../actions/profile';
+import { useRouter } from 'next/navigation';
 
 type Profile = {
   name?: string;
@@ -10,9 +11,12 @@ type Profile = {
 };
 
 export default function ProfileCardClient({ profile, fallbackEmail }: { profile: Profile | null, fallbackEmail?: string }) {
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showDisableConfirm, setShowDisableConfirm] = useState(false);
+  const [disabling, setDisabling] = useState(false);
   
   const [formData, setFormData] = useState({
     name: profile?.name || '',
@@ -40,6 +44,18 @@ export default function ProfileCardClient({ profile, fallbackEmail }: { profile:
     }
   };
 
+  const handleDisableAccount = async () => {
+    setDisabling(true);
+    const res = await deactivateAccountAction();
+    if (res?.error) {
+      setError(res.error);
+      setDisabling(false);
+      setShowDisableConfirm(false);
+    } else {
+      router.push('/login');
+    }
+  };
+
   return (
     <>
       <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col items-start h-full">
@@ -49,12 +65,18 @@ export default function ProfileCardClient({ profile, fallbackEmail }: { profile:
           {profile?.phone || 'No phone number added'}
         </p>
         
-        <div className="mt-6 pt-6 border-t border-slate-50 w-full">
+        <div className="mt-6 pt-6 border-t border-slate-50 w-full flex items-center justify-between">
            <button 
              onClick={() => setIsEditing(true)}
              className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
            >
              Edit Profile details
+           </button>
+           <button
+             onClick={() => setShowDisableConfirm(true)}
+             className="text-sm font-medium text-rose-400 hover:text-rose-600 transition-colors"
+           >
+             Disable Account
            </button>
         </div>
       </div>
@@ -129,6 +151,36 @@ export default function ProfileCardClient({ profile, fallbackEmail }: { profile:
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showDisableConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/20 backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-[2.5rem] w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-semibold text-slate-900 tracking-tight mb-2">Disable Account?</h3>
+            <p className="text-slate-500 font-light text-sm mb-8 leading-relaxed">
+              Your account will be deactivated and you'll be logged out immediately. Contact support to re-enable it.
+            </p>
+            {error && <div className="p-3 mb-4 rounded-xl bg-red-50 text-red-600 text-sm">{error}</div>}
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowDisableConfirm(false)}
+                disabled={disabling}
+                className="px-6 py-3 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDisableAccount}
+                disabled={disabling}
+                className="px-8 py-3 rounded-full text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {disabling ? (
+                  <><div className="w-4 h-4 rounded-full border-2 border-rose-300 border-t-white animate-spin"></div> Disabling...</>
+                ) : 'Yes, Disable My Account'}
+              </button>
+            </div>
           </div>
         </div>
       )}

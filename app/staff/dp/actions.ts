@@ -260,3 +260,26 @@ export async function fetchDpHistory() {
   }
   return res.json();
 }
+
+export async function deactivateDpAccountAction() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('dp_token')?.value;
+
+  if (!token) return { error: 'Not authenticated' };
+
+  try {
+    const res = await fetch(`${API_URL}/api/delivery-person/me`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` },
+    });
+
+    if (!res.ok) return { error: 'Failed to deactivate account' };
+
+    cookieStore.delete('dp_token');
+    cookieStore.delete('role');
+    cookieStore.delete('dp_id');
+    return { success: true };
+  } catch {
+    return { error: 'Network error occurred' };
+  }
+}
