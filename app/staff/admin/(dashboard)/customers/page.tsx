@@ -170,22 +170,6 @@ export default function CustomersPage() {
                             <Eye className="h-3.5 w-3.5" strokeWidth={2} /> View
                           </span>
                         </Link>
-                        <button 
-                          onClick={(e) => {
-                             e.stopPropagation();
-                             handleToggleStatus(customer, customer.active);
-                          }}
-                          className={`p-1.5 rounded-lg transition-colors ${
-                            customer.active 
-                              ? "text-gray-400 hover:text-amber-600 hover:bg-amber-50" 
-                              : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"
-                          }`}
-                          title={customer.active ? "Disable Account" : "Enable Account"}
-                        >
-                          <span className="text-xs font-medium px-1.5">
-                            {customer.active ? "Disable" : "Enable"}
-                          </span>
-                        </button>
                       </div>
                     </td>
                   </tr>

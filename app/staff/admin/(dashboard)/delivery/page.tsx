@@ -190,22 +190,6 @@ export default function DeliveryAdminPage() {
                               <Eye className="h-3.5 w-3.5" strokeWidth={2} /> View
                             </span>
                           </Link>
-                          <button 
-                            onClick={(e) => {
-                               e.stopPropagation();
-                               handleToggleStatus(dp, isActive);
-                            }}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              isActive 
-                                ? "text-gray-400 hover:text-amber-600 hover:bg-amber-50" 
-                                : "text-gray-400 hover:text-emerald-600 hover:bg-emerald-50"
-                            }`}
-                            title={isActive ? "Disable Access" : "Enable Access"}
-                          >
-                            <span className="text-xs font-medium px-1.5">
-                              {isActive ? "Disable" : "Enable"}
-                            </span>
-                          </button>
                         </div>
                       </td>
                     </tr>
