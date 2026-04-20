@@ -10,7 +10,8 @@ import {
   Truck, 
   Clock, 
   PackageCheck,
-  AlertCircle 
+  AlertCircle,
+  XCircle
 } from "lucide-react";
 import { fetchDashboardMetrics } from "../actions";
 
@@ -27,6 +28,7 @@ interface DashboardData {
     total: number;
     completed: number;
     pending: number;
+    cancelled: number;
   };
   duesAlerts: {
     id: number;
@@ -112,7 +114,7 @@ export default function AdminDashboard() {
       icon: Truck,
     },
     {
-      name: "Pending Del. Requests",
+      name: "Pending Delivery Person Requests",
       value: data.metrics.todayPendingDeliveries.toLocaleString(),
       icon: Clock,
     },
@@ -175,7 +177,7 @@ export default function AdminDashboard() {
             </h3>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-6 pt-2">
              <div className="p-6 rounded-2xl border border-gray-100 bg-[#FBFBFD]">
                <div className="flex items-center gap-2 mb-3 text-gray-500 text-sm font-medium">
                  <Truck className="h-4 w-4" /> Total Scheduled
@@ -195,6 +197,13 @@ export default function AdminDashboard() {
                  <Clock className="h-4 w-4" /> Pending
                </div>
                <span className="text-4xl font-light text-amber-700">{data.deliveryOverview.pending}</span>
+             </div>
+
+             <div className="p-6 rounded-2xl border border-rose-100 bg-rose-50/30">
+               <div className="flex items-center gap-2 mb-3 text-rose-600 text-sm font-medium">
+                 <XCircle className="h-4 w-4" /> Cancelled
+               </div>
+               <span className="text-4xl font-light text-rose-700">{data.deliveryOverview.cancelled}</span>
              </div>
           </div>
         </div>

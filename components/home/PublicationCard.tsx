@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useCart } from '../cart/CartProvider';
 
 interface Publication {
@@ -16,6 +17,7 @@ interface Publication {
 export default function PublicationCard({ publication }: { publication: Publication }) {
   const isAvailable = publication.enabled;
   const { addToCart } = useCart();
+  const [isAdded, setIsAdded] = useState(false);
 
   return (
     <div className="group relative flex flex-col rounded-[24px] overflow-hidden bg-white/70 backdrop-blur-3xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)]">
@@ -63,11 +65,13 @@ export default function PublicationCard({ publication }: { publication: Publicat
           <button 
             disabled={!isAvailable}
             className={`w-full py-3.5 px-6 rounded-full text-[13px] font-semibold tracking-wide transition-all duration-300 ease-out flex items-center justify-center gap-2 ${
-              isAvailable 
-                ? 'bg-slate-900/95 text-white hover:bg-black hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 active:scale-[0.98]' 
-                : 'bg-slate-100/50 text-slate-400 cursor-not-allowed'
+              !isAvailable 
+                ? 'bg-slate-100/50 text-slate-400 cursor-not-allowed'
+                : isAdded
+                  ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] scale-[1.02]'
+                  : 'bg-slate-900/95 text-white hover:bg-black hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 active:scale-[0.98]'
             }`}
-            onClick={() => {
+             onClick={() => {
               if (isAvailable) {
                 addToCart({
                   id: publication.id,
@@ -76,14 +80,25 @@ export default function PublicationCard({ publication }: { publication: Publicat
                   type: publication.type,
                   frequency: publication.frequency
                 });
+                
+                // Trigger the tiny noticeable animation
+                setIsAdded(true);
+                setTimeout(() => setIsAdded(false), 1500);
               }
             }}
           >
             {isAvailable ? (
-              <>
-                <span>Add to Cart</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
-              </>
+              isAdded ? (
+                <>
+                  <span>Added to Cart</span>
+                  <svg className="animate-[bounce_0.5s_ease-in-out_infinite]" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </>
+              ) : (
+                <>
+                  <span>Add to Cart</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                </>
+              )
             ) : 'Currently Unavailable'}
           </button>
         </div>

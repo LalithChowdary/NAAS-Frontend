@@ -492,12 +492,22 @@ export async function fetchDashboardMetrics() {
     const pendingRequests = Array.isArray(pendingReqJson) ? pendingReqJson : [];
 
     const activeSubs = subscriptions.filter((s) => s.status === 'ACTIVE').length;
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yyyy = now.getFullYear();
+    const currentMonth = `${mm}-${yyyy}`; // Matches DB format MM-yyyy
     const dueStatuses = new Set(['UNPAID', 'PARTIALLY_PAID', 'OVERDUE']);
 
     const monthlyRevenue = bills
       .filter((b) => b.billingMonth === currentMonth)
-      .reduce((sum, b) => sum + (Number(b.totalAmount) || 0), 0);
+      .reduce((sum, b) => {
+         // To properly reflect revenue actually collected, sum up paid amounts
+         // or you can sum totalAmount if it means 'Revenue Billed'.
+         // Let's sum totalAmount of PAID bills, and paidAmount of partially paid ones,
+         // which is accurately represented by just checking paidAmount on all bills.
+         const paid = Number(b.paidAmount) || 0;
+         return sum + (b.status === 'PAID' ? (Number(b.totalAmount) || 0) : paid);
+      }, 0);
 
     const pendingDues = bills
       .filter((b) => dueStatuses.has(String(b.status || '')))
@@ -542,7 +552,8 @@ export async function fetchDashboardMetrics() {
 
     const totalDeliveries = deliveries.length;
     const completedDeliveries = deliveries.filter((d) => d.status === 'DELIVERED' || (d as any).deliveryStatus === 'DELIVERED').length;
-    const pendingDeliveries = Math.max(totalDeliveries - completedDeliveries, 0);
+    const cancelledDeliveries = deliveries.filter((d) => d.status === 'CANCELLED' || (d as any).deliveryStatus === 'CANCELLED').length;
+    const pendingDeliveries = Math.max(totalDeliveries - completedDeliveries - cancelledDeliveries, 0);
 
     return {
       ok: true,
@@ -559,6 +570,7 @@ export async function fetchDashboardMetrics() {
           total: totalDeliveries,
           completed: completedDeliveries,
           pending: pendingDeliveries,
+          cancelled: cancelledDeliveries,
         },
         duesAlerts: customersWithDues,
       },
